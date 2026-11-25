@@ -1,4 +1,5 @@
 import { cloneDocument, resolveSelection } from '../model/operations'
+import { shareStructure } from '../model/structuralSharing'
 import type { TimelineDocument, TimelineSelection } from '../model/types'
 import { clampTrackScale } from '../engine/timeScale'
 import type {
@@ -166,7 +167,9 @@ export class TimelineStore implements TimelineStoreLike {
       this.pushHistorySnapshot(this.state.document)
     }
 
-    const nextDoc = cloneDocument(doc)
+    // Documents held by the store are never mutated in place, so unchanged
+    // tracks/clips can be shared with the previous version (and history).
+    const nextDoc = shareStructure(this.state.document, cloneDocument(doc))
     const targetClipIds = options?.selectionClipIds ?? this.state.selection.clipIds
     const targetPrimary = options?.primaryClipId !== undefined
       ? options.primaryClipId
@@ -333,7 +336,7 @@ export class TimelineStore implements TimelineStoreLike {
       return false
     }
 
-    this.historyFuture.push(cloneDocument(this.state.document))
+    this.historyFuture.push(this.state.document)
     const nextSelection = resolveSelection(
       previous,
       this.state.selection.clipIds,
@@ -363,7 +366,7 @@ export class TimelineStore implements TimelineStoreLike {
       return false
     }
 
-    this.historyPast.push(cloneDocument(this.state.document))
+    this.historyPast.push(this.state.document)
     const nextSelection = resolveSelection(
       next,
       this.state.selection.clipIds,
@@ -419,7 +422,7 @@ export class TimelineStore implements TimelineStoreLike {
   }
 
   private pushHistorySnapshot(doc: TimelineDocument): void {
-    this.historyPast.push(cloneDocument(doc))
+    this.historyPast.push(doc)
     if (this.historyPast.length > this.maxHistory) {
       this.historyPast.shift()
     }

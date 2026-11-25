@@ -55,6 +55,14 @@ function resolveUIConfig(options: TimelineEditorOptions): UIConfig {
   return ui
 }
 
+/**
+ * Window-level keyboard routing across editor instances. When focus is not inside
+ * any editor (e.g. on <body>), only the editor the user last interacted with
+ * handles shortcuts, so several editors on one page never react to one key press.
+ */
+const liveEditors = new Set<TimelineEditor>()
+let activeEditor: TimelineEditor | null = null
+
 export class TimelineEditor extends EventTarget {
   private readonly container: HTMLElement
   private readonly store: TimelineStore
@@ -67,6 +75,7 @@ export class TimelineEditor extends EventTarget {
   private destroyed: boolean
 
   private readonly onPointerDownRef: (event: PointerEvent) => void
+  private readonly onFocusInRef: () => void
   private readonly onPointerMoveRef: (event: PointerEvent) => void
   private readonly onPointerUpRef: (event: PointerEvent) => void
   private readonly onPointerCancelRef: () => void
@@ -174,6 +183,7 @@ export class TimelineEditor extends EventTarget {
     this.onDragLeaveRef = () => this.interactions.handleDragLeave()
     this.onDropRef = event => this.onDrop(event)
     this.onKeyDownRef = event => this.onKeyDown(event)
+    this.onFocusInRef = () => this.markActive()
     this.onKeyUpRef = event => this.onKeyUp(event)
     this.onWindowResizeRef = () => this.resize()
 
@@ -375,6 +385,8 @@ export class TimelineEditor extends EventTarget {
     const scroller = this.renderer.getMainScrollerElement()
 
     root.addEventListener('pointerdown', this.onPointerDownRef)
+    root.addEventListener('focusin', this.onFocusInRef)
+    liveEditors.add(this)
     root.addEventListener('click', this.onClickRef)
     root.addEventListener('input', this.onInputRef)
     root.addEventListener('wheel', this.onWheelRef, { passive: false })
@@ -403,6 +415,11 @@ export class TimelineEditor extends EventTarget {
     const scroller = this.renderer.getMainScrollerElement()
 
     root.removeEventListener('pointerdown', this.onPointerDownRef)
+    root.removeEventListener('focusin', this.onFocusInRef)
+    liveEditors.delete(this)
+    if (activeEditor === this) {
+      activeEditor = null
+    }
     root.removeEventListener('click', this.onClickRef)
     root.removeEventListener('input', this.onInputRef)
     root.removeEventListener('wheel', this.onWheelRef)
@@ -465,7 +482,12 @@ export class TimelineEditor extends EventTarget {
     }))
   }
 
+  private markActive(): void {
+    activeEditor = this
+  }
+
   private onPointerDown(event: PointerEvent): void {
+    this.markActive()
     const doc = this.store.getState().document
     const hit = this.renderer.hitTestClientPoint(event.clientX, event.clientY, event.target, doc)
     this.interactions.handlePointerDown({
@@ -615,10 +637,15 @@ export class TimelineEditor extends EventTarget {
     }
     const root = this.renderer.getRootElement()
     const active = typeof document !== 'undefined' ? document.activeElement : null
-    if (!active || active === document.body || active === document.documentElement) {
+    if (active && root.contains(active)) {
       return true
     }
-    return root.contains(active)
+    if (!active || active === document.body || active === document.documentElement) {
+      // Focus is nowhere in particular: route to the last-used editor, or to the
+      // only editor on the page if none has been used yet.
+      return activeEditor ? activeEditor === this : liveEditors.size === 1
+    }
+    return false
   }
 
   private computeFitToViewScale(): number | null {
