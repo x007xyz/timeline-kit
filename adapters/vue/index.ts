@@ -175,9 +175,9 @@ export const TimelineEditor = defineComponent({
         keymap: props.keymap,
         mediaProvider: props.mediaProvider,
         renderHints: props.renderHints,
-        onBeforeCommand: props.onBeforeCommand
-          ? (cmd, ctx) => props.onBeforeCommand?.(cmd, ctx)
-          : undefined,
+        // Always wrap: reads the current prop per command, so a hook supplied
+        // (or swapped) after mount is honoured, matching the React adapter.
+        onBeforeCommand: (cmd, ctx) => props.onBeforeCommand?.(cmd, ctx),
       })
 
       editor.addEventListener('documentchange', (e) => {
