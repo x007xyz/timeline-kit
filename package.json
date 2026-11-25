@@ -77,7 +77,7 @@
     "docs:gen-api": "node ./scripts/gen-api-docs.mjs",
     "docs:verify": "node ./scripts/verify-docs.mjs",
     "dev": "vite",
-    "build": "npm run clean && vite build && tsc -p tsconfig.build.json",
+    "build": "npm run clean && vite build && tsc -p tsconfig.build.json && node scripts/fix-dts-extensions.mjs",
     "build:demo": "vite build --mode demo",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "eslint .",
