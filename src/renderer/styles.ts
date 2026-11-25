@@ -77,6 +77,9 @@ const styles = `
 .tk-default-clip-meta{font-size:10px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tk-playhead{position:absolute;top:0;bottom:0;width:1px;background:var(--tk-border-strong);z-index:30;pointer-events:none}
 .tk-playhead-handle{position:absolute;top:0;left:0;width:10px;height:12px;background:var(--tk-border-strong);border:1px solid var(--tk-border-strong);transform:translateX(-50%);cursor:ew-resize;pointer-events:auto}
+.tk-timeline-editor:focus-visible{outline:2px solid var(--tk-accent);outline-offset:-2px}
+.tk-toolbar-button:focus-visible,.tk-zoom-button:focus-visible,.tk-zoom-slider:focus-visible,.tk-track-toggle:focus-visible,.tk-playhead-handle:focus-visible{outline:2px solid var(--tk-accent);outline-offset:2px}
+.tk-sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .tk-playhead-handle::after{content:'';display:block;width:10px;height:10px;border:5px solid var(--tk-border-strong);position:absolute;top:100%;left:-1px;border-right-color:transparent;border-left-color:transparent;border-bottom-color:transparent;box-sizing:border-box}
 @media (max-width: 900px){
   .tk-timeline-toolbar{padding:8px 12px 6px}

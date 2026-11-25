@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>timeline-kit multi-instance demo</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f19;
+        color: #e2e8f0;
+        font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      #panes {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        box-sizing: border-box;
+        height: 100%;
+      }
+      .pane {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 420px;
+        border: 1px solid #1f2937;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #111827;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="panes">
+      <div id="editor-a" class="pane"></div>
+      <div id="editor-b" class="pane"></div>
+    </div>
+    <script type="module" src="./multi.ts"></script>
+  </body>
+</html>

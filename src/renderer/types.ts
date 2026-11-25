@@ -104,6 +104,8 @@ export interface UIConfig {
   toolbar?: boolean | ToolbarConfig[]
   sidebar?: boolean | SidebarConfig
   ruler?: boolean
+  /** Accessible name for the timeline root (default "Timeline"). */
+  ariaLabel?: string
 }
 
 export interface MediaProvider {

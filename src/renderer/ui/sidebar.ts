@@ -165,10 +165,11 @@ export class SidebarRenderer {
     hidden: boolean,
     muted: boolean,
   ): void {
-    const actions: Array<{ command: 'locked' | 'visible' | 'muted', title: string, active: boolean }> = [
-      { command: 'locked', title: locked ? '解锁' : '锁定', active: locked },
-      { command: 'visible', title: hidden ? '显示' : '隐藏', active: hidden },
-      { command: 'muted', title: muted ? '取消静音' : '静音', active: muted },
+    // aria-label is a stable name for the toggle; the pressed state is conveyed by aria-pressed.
+    const actions: Array<{ command: 'locked' | 'visible' | 'muted', title: string, label: string, active: boolean }> = [
+      { command: 'locked', title: locked ? '解锁' : '锁定', label: 'Lock track', active: locked },
+      { command: 'visible', title: hidden ? '显示' : '隐藏', label: 'Hide track', active: hidden },
+      { command: 'muted', title: muted ? '取消静音' : '静音', label: 'Mute track', active: muted },
     ]
 
     const buttons = actions.map((action) => {
@@ -178,7 +179,8 @@ export class SidebarRenderer {
       button.dataset.trackCommand = action.command
       button.dataset.trackIndex = String(trackIndex)
       button.title = action.title
-      button.setAttribute('aria-label', action.title)
+      button.setAttribute('aria-label', action.label)
+      button.setAttribute('aria-pressed', action.active ? 'true' : 'false')
       if (action.active) {
         button.classList.add('is-active')
       }

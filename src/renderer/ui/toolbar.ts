@@ -129,6 +129,7 @@ export class ToolbarRenderer {
     slider.step = '1'
     slider.value = String(context.snapshot.trackScale)
     slider.dataset.command = 'track-scale'
+    slider.setAttribute('aria-label', 'Zoom')
     this.slider = slider
 
     const plus = document.createElement('button')
@@ -166,6 +167,9 @@ export class ToolbarRenderer {
 
     button.disabled = isDisabled
     button.classList.toggle('is-active', isActive)
+    if (tool.isActive !== undefined || tool.id === 'magnetSnap') {
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false')
+    }
 
     if (tool.render) {
       button.replaceChildren()

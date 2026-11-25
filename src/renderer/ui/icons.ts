@@ -10,6 +10,8 @@ export function createSvgIcon(paths: readonly string[], options: { color?: strin
   svg.setAttribute('stroke-width', '2')
   svg.setAttribute('stroke-linecap', 'round')
   svg.setAttribute('stroke-linejoin', 'round')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('focusable', 'false')
   svg.classList.add('tk-lucide')
   for (const d of paths) {
     const path = document.createElementNS(svgNS, 'path')

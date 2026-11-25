@@ -49,8 +49,10 @@ interface RenderRefs {
   preview: HTMLDivElement
   marquee: HTMLDivElement
   playhead: HTMLDivElement
+  playheadHandle: HTMLDivElement
   verticalGuideline: HTMLDivElement
   horizontalGuideline: HTMLDivElement
+  status: HTMLDivElement
 }
 
 interface MountedClipRecord {
@@ -72,6 +74,46 @@ export interface DomRendererOptions {
   theme?: ThemeMode
   injectStyles?: boolean
   mediaProvider?: MediaProvider
+  /** Accessible name for the timeline root. Overrides `ui.ariaLabel`; default "Timeline". */
+  ariaLabel?: string
+}
+
+const DEFAULT_ARIA_LABEL = 'Timeline'
+
+/** Sets an attribute only when its value changed, so unchanged nodes are not touched. */
+function setAttr(el: Element, name: string, value: string): void {
+  if (el.getAttribute(name) !== value) {
+    el.setAttribute(name, value)
+  }
+}
+
+/** Formats seconds as m:ss.s, e.g. 4.5 -> "0:04.5". */
+function formatTimecode(seconds: number): string {
+  const safe = Number.isFinite(seconds) && seconds > 0 ? seconds : 0
+  const minutes = Math.floor(safe / 60)
+  const secs = (safe - minutes * 60).toFixed(1).padStart(4, '0')
+  return `${minutes}:${secs}`
+}
+
+function clipAriaLabel(clip: TimelineClip): string {
+  const start = formatTimecode((Number(clip.startMs) || 0) / 1000)
+  const end = formatTimecode((Number(clip.endMs) || 0) / 1000)
+  return `${clip.name || clip.id}, ${start} – ${end}`
+}
+
+function trackAriaLabel(track: { id: string, name: string, locked?: boolean, visible?: boolean, muted?: boolean }): string {
+  const states: string[] = []
+  if (track.locked === true) {
+    states.push('locked')
+  }
+  if (track.visible === false) {
+    states.push('hidden')
+  }
+  if (track.muted === true) {
+    states.push('muted')
+  }
+  const name = track.name || track.id
+  return states.length > 0 ? `${name}, ${states.join(', ')}` : name
 }
 
 function createFilmstripPlaceholders(): HTMLSpanElement[] {
@@ -97,6 +139,8 @@ export class DomTimelineRenderer implements PluginRendererPort {
   private lastState: TimelineState | null
   private lastVirtualizedScrollLeft: number
   private previousUserSelect: string
+  private readonly ariaLabelOverride: string | undefined
+  private lastAnnouncedSelection: string
 
   constructor(container: HTMLElement, options: DomRendererOptions = {}) {
     this.container = container
@@ -108,6 +152,8 @@ export class DomTimelineRenderer implements PluginRendererPort {
     this.lastState = null
     this.lastVirtualizedScrollLeft = 0
     this.previousUserSelect = ''
+    this.ariaLabelOverride = options.ariaLabel
+    this.lastAnnouncedSelection = ''
     this.overlayState = {
       verticalGuidelinePx: null,
       horizontalGuidelinePx: null,
@@ -144,6 +190,11 @@ export class DomTimelineRenderer implements PluginRendererPort {
 
   setUIConfig(uiConfig: UIConfig): void {
     this.uiConfig = uiConfig
+    setAttr(this.refs.root, 'aria-label', this.resolveAriaLabel())
+  }
+
+  private resolveAriaLabel(): string {
+    return this.ariaLabelOverride ?? this.uiConfig.ariaLabel ?? DEFAULT_ARIA_LABEL
   }
 
   setMediaProvider(provider: MediaProvider | undefined): void {
@@ -225,6 +276,9 @@ export class DomTimelineRenderer implements PluginRendererPort {
     this.refs.root.dataset.theme = state.theme
 
     const fullRender = !dirty
+    if (fullRender) {
+      setAttr(this.refs.root, 'aria-label', this.resolveAriaLabel())
+    }
     const shouldRecomputeLayout = fullRender
       || dirty.has('tracks')
       || dirty.has('ruler')
@@ -260,6 +314,10 @@ export class DomTimelineRenderer implements PluginRendererPort {
     }
     else if (dirty.has('selection')) {
       this.renderSelectionOnly(state)
+    }
+
+    if (dirty?.has('selection')) {
+      this.announceSelection(state)
     }
 
     if (fullRender || dirty.has('playhead') || dirty.has('tracks') || dirty.has('ruler')) {
@@ -314,7 +372,6 @@ export class DomTimelineRenderer implements PluginRendererPort {
 
     let zoneHint: HitZone | undefined
     let hintClipId: string | null = null
-    let hintTrackIndex: number | undefined
 
     if (el) {
       if (el.closest('.tk-timeline-toolbar')) {
@@ -355,7 +412,6 @@ export class DomTimelineRenderer implements PluginRendererPort {
       y,
       zoneHint,
       hintClipId,
-      hintTrackIndex,
     })
   }
 
@@ -377,6 +433,8 @@ export class DomTimelineRenderer implements PluginRendererPort {
     root.className = 'tk-timeline-editor'
     root.tabIndex = 0
     root.dataset.theme = theme
+    root.setAttribute('role', 'application')
+    root.setAttribute('aria-label', this.resolveAriaLabel())
 
     const toolbar = document.createElement('div')
     toolbar.className = 'tk-timeline-toolbar'
@@ -401,6 +459,7 @@ export class DomTimelineRenderer implements PluginRendererPort {
     ruler.className = 'tk-timeline-ruler'
     const rulerCanvas = document.createElement('canvas')
     rulerCanvas.className = 'tk-ruler-canvas'
+    rulerCanvas.setAttribute('aria-hidden', 'true')
     ruler.appendChild(rulerCanvas)
 
     const tracksViewport = document.createElement('div')
@@ -430,11 +489,20 @@ export class DomTimelineRenderer implements PluginRendererPort {
     playhead.className = 'tk-playhead'
     const handle = document.createElement('div')
     handle.className = 'tk-playhead-handle'
+    handle.setAttribute('role', 'slider')
+    handle.setAttribute('aria-label', 'Playhead')
+    handle.tabIndex = 0
     playhead.appendChild(handle)
+
+    // Visually hidden live region; only the selection channel writes to it.
+    const status = document.createElement('div')
+    status.className = 'tk-sr-only'
+    status.setAttribute('role', 'status')
+    status.setAttribute('aria-live', 'polite')
 
     main.append(mainScroller, playhead)
     workspace.append(sidebar, main)
-    root.append(toolbar, workspace)
+    root.append(toolbar, workspace, status)
 
     this.container.replaceChildren(root)
 
@@ -455,8 +523,10 @@ export class DomTimelineRenderer implements PluginRendererPort {
       preview,
       marquee,
       playhead,
+      playheadHandle: handle,
       verticalGuideline,
       horizontalGuideline,
+      status,
     }
   }
 
@@ -557,10 +627,15 @@ export class DomTimelineRenderer implements PluginRendererPort {
     row.style.width = `${Math.max(0, timelineWidth - TRACK_PADDING_LEFT)}px`
     row.dataset.trackIndex = String(trackLayout.trackIndex)
     row.dataset.trackId = trackLayout.track.id
+    row.setAttribute('role', 'group')
+    row.setAttribute('aria-label', trackAriaLabel(trackLayout.track))
 
     const lane = document.createElement('div')
     lane.className = 'tk-track-lane'
     lane.style.width = `${Math.max(0, timelineWidth - TRACK_PADDING_LEFT)}px`
+    lane.setAttribute('role', 'listbox')
+    lane.setAttribute('aria-multiselectable', 'true')
+    lane.setAttribute('aria-label', trackLayout.track.name || trackLayout.track.id)
 
     const visibleClips = filterVisibleClips(trackLayout.clips, visibleRange, alwaysIncludeIds)
     for (const clipLayout of visibleClips) {
@@ -604,6 +679,8 @@ export class DomTimelineRenderer implements PluginRendererPort {
     clipNode.dataset.trackIndex = String(clipLayout.trackIndex)
     clipNode.dataset.clipIndex = String(clipLayout.clipIndex)
     clipNode.dataset.type = clipLayout.type
+    setAttr(clipNode, 'aria-label', clipAriaLabel(clip))
+    setAttr(clipNode, 'aria-selected', isSelected ? 'true' : 'false')
 
     const ctx: ClipRenderContext = {
       clip,
@@ -690,6 +767,7 @@ export class DomTimelineRenderer implements PluginRendererPort {
           const canvas = document.createElement('canvas')
           canvas.className = 'tk-media-clip-canvas'
           canvas.dataset.mediaRole = 'filmstrip'
+          canvas.setAttribute('aria-hidden', 'true')
           canvas.width = Math.max(1, Math.round(ctx.clipWidthPx * ratio))
           canvas.height = Math.max(1, Math.round(32 * ratio))
           filmstripHost.appendChild(canvas)
@@ -713,6 +791,7 @@ export class DomTimelineRenderer implements PluginRendererPort {
         const canvas = document.createElement('canvas')
         canvas.className = 'tk-media-clip-canvas'
         canvas.dataset.mediaRole = 'waveform'
+        canvas.setAttribute('aria-hidden', 'true')
         canvas.width = Math.max(1, Math.round(ctx.clipWidthPx * ratio))
         canvas.height = Math.max(1, Math.round((clip.type === 'audio' ? 38 : 14) * ratio))
         waveform.appendChild(canvas)
@@ -765,6 +844,7 @@ export class DomTimelineRenderer implements PluginRendererPort {
         }
         const isSelected = selectedSet.has(clipLayout.clip.id) || state.selection.clipId === clipLayout.clip.id
         record.clipNode.classList.toggle('is-selected', isSelected)
+        setAttr(record.clipNode, 'aria-selected', isSelected ? 'true' : 'false')
         if (record.slotRef) {
           record.slotHandle?.update?.({
             clip: clipLayout.clip,
@@ -786,6 +866,43 @@ export class DomTimelineRenderer implements PluginRendererPort {
     const offsetPx = currentTimeSec * this.layout.pixelsPerSecond
     const scrollLeft = this.refs.mainScroller.scrollLeft
     this.refs.playhead.style.left = `${Math.max(0, TRACK_PADDING_LEFT + offsetPx - scrollLeft)}px`
+
+    const handle = this.refs.playheadHandle
+    const totalFrames = Math.round(this.layout.totalDurationSec * this.layout.fps)
+    setAttr(handle, 'aria-valuemin', '0')
+    setAttr(handle, 'aria-valuemax', String(Math.max(totalFrames, state.currentFrame, 0)))
+    setAttr(handle, 'aria-valuenow', String(state.currentFrame))
+    setAttr(handle, 'aria-valuetext', formatTimecode(currentTimeSec))
+  }
+
+  /** Announces the selection through the live region. Called only on the selection channel. */
+  private announceSelection(state: TimelineState): void {
+    const ids = state.selection.clipIds.length > 0
+      ? [...state.selection.clipIds]
+      : (state.selection.clipId ? [state.selection.clipId] : [])
+    const key = ids.join('\u0000')
+    if (key === this.lastAnnouncedSelection) {
+      return
+    }
+    this.lastAnnouncedSelection = key
+
+    if (ids.length === 0) {
+      this.refs.status.textContent = 'Selection cleared'
+      return
+    }
+
+    const wanted = new Set(ids)
+    const names: string[] = []
+    for (const track of state.document.tracks) {
+      for (const clip of track.clips) {
+        if (wanted.has(clip.id)) {
+          names.push(clip.name || clip.id)
+        }
+      }
+    }
+    this.refs.status.textContent = names.length === 1
+      ? `Selected: ${names[0]}`
+      : `Selected ${ids.length} clips: ${names.join(', ')}`
   }
 
   private renderOverlay(): void {
@@ -887,6 +1004,7 @@ export class DomTimelineRenderer implements PluginRendererPort {
 
     const clipNode = document.createElement('div')
     clipNode.className = 'tk-track-clip'
+    clipNode.setAttribute('role', 'option')
 
     const contentHost = document.createElement('div')
     contentHost.className = 'tk-track-clip-content'
@@ -898,11 +1016,13 @@ export class DomTimelineRenderer implements PluginRendererPort {
     leftHandle.className = 'tk-track-clip-handle is-left'
     leftHandle.dataset.trimEdge = 'start'
     leftHandle.textContent = '|'
+    leftHandle.setAttribute('aria-hidden', 'true')
 
     const rightHandle = document.createElement('div')
     rightHandle.className = 'tk-track-clip-handle is-right'
     rightHandle.dataset.trimEdge = 'end'
     rightHandle.textContent = '|'
+    rightHandle.setAttribute('aria-hidden', 'true')
 
     clipNode.append(contentHost, selectionFrame, leftHandle, rightHandle)
 
@@ -933,6 +1053,8 @@ export class DomTimelineRenderer implements PluginRendererPort {
   private renderTrackOverlay(text: string, variant: string): HTMLElement {
     const overlay = document.createElement('div')
     overlay.className = `tk-track-overlay ${variant}`
+    // The row's aria-label already carries the locked/hidden/muted state.
+    overlay.setAttribute('aria-hidden', 'true')
     const badge = document.createElement('div')
     badge.className = 'tk-track-overlay-badge'
     badge.textContent = text
