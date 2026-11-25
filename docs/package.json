@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "pnpm run sync:assets && astro dev",
+    "build": "pnpm run sync:assets && astro build",
     "preview": "astro preview",
-    "gen:api": "node ../scripts/gen-api-docs.mjs"
+    "gen:api": "node ../scripts/gen-api-docs.mjs",
+    "sync:assets": "node ../scripts/sync-docs-assets.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",

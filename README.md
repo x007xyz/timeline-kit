@@ -9,6 +9,35 @@
 
 ---
 
+## 安装
+
+```bash
+npm i timeline-kit
+# 或
+pnpm add timeline-kit
+```
+
+- `react` / `react-dom`（>=18）与 `vue`（>=3.3）是**可选 peer 依赖**，仅在使用 `timeline-kit/react` 或 `timeline-kit/vue` 适配层时需要安装；只使用原生 JS / TS 入口时无需安装。
+- 包内同时提供 ESM 产物与 TypeScript 类型声明，无需额外安装 `@types/*`。
+
+### 入口一览
+
+| 入口 | 内容 |
+| --- | --- |
+| `timeline-kit` | 默认入口：`createTimelineEditor`、`demoDocument`、官方交互插件等，开箱即用的完整编辑器 |
+| `timeline-kit/core` | 纯逻辑内核：数据模型与编辑操作、引擎计算、`TimelineStore` / `CommandBus`、插件类型与 `InteractionManager`、框架桥接工具（不含默认 UI 渲染器） |
+| `timeline-kit/otio` | OpenTimelineIO 双向适配器（`Timeline.1` 与旧版 FlyCut metadata） |
+| `timeline-kit/plugins` | 官方插件集合（框选、磁吸、外部拖入等） |
+| `timeline-kit/react` | React 适配层：`TimelineEditor` 组件（Portal + `useSyncExternalStore`）与 `useTimelineSelector` 等 Hooks |
+| `timeline-kit/vue` | Vue 3 适配层：`TimelineEditor` 组件（Teleport + 作用域插槽）与 Composables |
+
+### 浏览器支持
+
+- 支持现代 evergreen 浏览器（Chrome、Edge、Firefox、Safari 的最新稳定版本）。
+- 语法目标为 ES2022；运行时依赖 **Canvas 2D**，不支持无 Canvas 的环境。
+
+---
+
 ## 快速开始
 
 ### 1. 原生 JS / TS（开箱即用）
@@ -122,9 +151,19 @@ timeline-kit/
 
 ## 本地运行与验证
 
-本仓库使用 Node 24 原生 TS 剥离与内置 `node:test`，无需安装第三方依赖即可运行全部检查与多场景 Demo：
+本仓库使用 Node 24 原生 TS 剥离与内置 `node:test`。运行检查、构建与 Demo 前需要先安装开发依赖（TypeScript、Vite、React、Vue 等）：
 
 ```bash
+pnpm install
+```
+
+```bash
+# 构建库产物（输出到 dist/：按入口的 ESM 与 dist/types 类型声明）
+npm run build
+
+# 构建多场景交互 Demo（产物位于 dist-demo/）
+npm run build:demo
+
 # 类型检查（核心库 + 示例 + React/Vue 适配层）
 npm run typecheck
 npm run typecheck:adapters
@@ -152,4 +191,12 @@ cd docs
 pnpm install
 pnpm dev
 ```
+
+`docs/public/assets/` 是由 `demo/assets/` 生成的副本，不纳入版本管理；`pnpm dev` 与 `pnpm build` 启动前会自动执行 `scripts/sync-docs-assets.mjs` 完成同步。
+
+---
+
+## 许可证
+
+本项目基于 [MIT License](./LICENSE) 发布，版权归 timeline-kit contributors 所有。
 
