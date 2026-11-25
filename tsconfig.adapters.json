@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": []
   },
-  "include": ["src", "adapters", "tests/*.test.ts", "scripts/peer-shims.d.ts"]
+  "include": ["src", "adapters", "tests/*.test.ts", "scripts/node-shims.d.ts"]
 }

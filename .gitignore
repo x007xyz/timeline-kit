@@ -7,3 +7,4 @@ docs/.astro/
 docs/dist/
 dist-demo/
 .pnpm-store/
+.claude/worktrees/
