@@ -8,6 +8,7 @@ import {
   shallowRef,
   watch,
   type PropType,
+  type VNode,
   type Ref,
   type ShallowRef,
 } from 'vue'
@@ -300,7 +301,7 @@ export const TimelineEditor = defineComponent({
     })
 
     return () => {
-      const teleports: unknown[] = []
+      const teleports: VNode[] = []
       if (slots.clip) {
         for (const entry of clipEntries.value) {
           teleports.push(
@@ -327,7 +328,7 @@ export const TimelineEditor = defineComponent({
       return h(
         'div',
         { ref: hostRef, style: { width: '100%', height: '100%' } },
-        teleports as any,
+        teleports,
       )
     }
   },

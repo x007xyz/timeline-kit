@@ -173,7 +173,7 @@ export async function launchCdpPage(options = {}) {
       writePipe.destroy()
       readPipe.destroy()
     }
-    catch {}
+    catch { /* already stopped or closed */ }
     if (!proc.killed) {
       proc.kill('SIGKILL')
       await new Promise((resolve) => {
@@ -239,7 +239,7 @@ export async function launchCdpPage(options = {}) {
               body: Buffer.from(String(err), 'utf8').toString('base64'),
             }, sessionId)
           }
-          catch {}
+          catch { /* already stopped or closed */ }
         }
       })
 

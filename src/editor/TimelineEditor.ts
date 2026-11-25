@@ -324,6 +324,7 @@ export class TimelineEditor extends EventTarget {
     return this.commands.canExecute(command, payload)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public default kept for API compatibility
   registerCommand<TPayload = any>(type: string, spec: CommandSpec<TPayload>): () => void {
     return this.commands.register(type, spec)
   }
@@ -483,6 +484,7 @@ export class TimelineEditor extends EventTarget {
   }
 
   private markActive(): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- module-level registry of the active instance
     activeEditor = this
   }
 

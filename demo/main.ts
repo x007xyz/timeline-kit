@@ -1,5 +1,5 @@
 import {
-  TimelineEditor,
+  type TimelineEditor,
   cloneDocument,
   createExternalDropPlugin,
   createGridSnapProvider,

@@ -116,6 +116,7 @@ export interface PluginContext {
 
 export interface TimelinePlugin {
   name: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous payload types per command
   commands?: Record<string, CommandSpec<any>>
   keymap?: Record<string, KeyBinding | null>
   interactions?: InteractionHandler[]

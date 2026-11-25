@@ -71,6 +71,7 @@ export interface CommandContext {
   fitToView?: () => number | null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- public default kept for API compatibility
 export interface CommandSpec<TPayload = any> {
   canExecute?: (ctx: CommandContext, payload: TPayload) => boolean
   execute: (ctx: CommandContext, payload: TPayload) => boolean | void

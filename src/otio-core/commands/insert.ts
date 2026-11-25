@@ -8,7 +8,6 @@ import { createGap } from './create'
 export function insertClipWithGap(track: Track, clip: Clip, atSeconds: number, fps: number): Track {
   const next = cloneTrack(track)
   const clipDurationFrames = clip.source_range.duration.value
-  const clipDurationSeconds = clipDurationFrames / fps
   const timelineDurationSeconds = getTrackDurationSeconds(next)
 
   if (atSeconds >= timelineDurationSeconds) {

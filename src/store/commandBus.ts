@@ -8,6 +8,7 @@ import type {
 
 export class CommandBus {
   private readonly context: CommandContext
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous payload types per command
   private readonly commands: Map<string, CommandSpec<any>>
   private readonly aliases: Map<string, string>
   private readonly beforeHooks: Set<BeforeCommandHook>
@@ -21,6 +22,7 @@ export class CommandBus {
     this.afterHooks = new Set()
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public default kept for API compatibility
   register<TPayload = any>(type: string, spec: CommandSpec<TPayload>): () => void {
     this.commands.set(type, spec)
     return () => {

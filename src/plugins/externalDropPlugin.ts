@@ -124,7 +124,7 @@ export function createExternalDropPlugin(options: ExternalDropPluginOptions): Ti
           const layout = ctx.renderer.getLayout()
           const policies = ctx.getPolicies()
           const durationMs = Math.max(100, item.durationMs)
-          let leftPx = Math.max(0, event.hit.x)
+          const leftPx = Math.max(0, event.hit.x)
 
           const snapPoints = collectSnapPoints(ctx.getSnapProviders(), {
             layout,

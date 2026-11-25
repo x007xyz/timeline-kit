@@ -87,7 +87,7 @@ describe('history structural sharing', () => {
   })
 
   it('caps the undo stack at maxHistory', () => {
-    const { store, bus } = createBus(2)
+    const { bus } = createBus(2)
     for (const trackIndex of [0, 1, 2]) {
       assert.equal(bus.execute('track:toggle-flag', { trackIndex, flag: 'muted' }), true)
     }

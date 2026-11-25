@@ -873,8 +873,8 @@ export function createTimelinePreviewPlayer(
         const srcH = Math.max(1, ownedVideoCanvas.height)
         const srcAspect = srcW / srcH
         const dstAspect = stageW / stageH
-        let drawW = stageW
-        let drawH = stageH
+        let drawW: number
+        let drawH: number
         let drawX = 0
         let drawY = 0
         if (dstAspect > srcAspect) {
@@ -1169,13 +1169,13 @@ export function createTimelinePreviewPlayer(
         source.stop()
         source.disconnect()
       }
-      catch {}
+      catch { /* already stopped or closed */ }
     }
     stream.sources.clear()
     try {
       stream.gainNode.disconnect()
     }
-    catch {}
+    catch { /* already stopped or closed */ }
     stream.iterator?.return?.().catch(() => {})
     stream.iterator = null
   }
@@ -1257,7 +1257,7 @@ export function createTimelinePreviewPlayer(
               try {
                 sourceNode.disconnect()
               }
-              catch {}
+              catch { /* already stopped or closed */ }
             }
             if (when >= ctx.currentTime) {
               sourceNode.start(when)
@@ -1289,7 +1289,7 @@ export function createTimelinePreviewPlayer(
   }
 
   function syncMediaElements(timeMs: number): void {
-    const { video, images, texts, audioClips } = findActiveClipsAt(timeMs)
+    const { video, audioClips } = findActiveClipsAt(timeMs)
 
     if (video && video.clip.resource) {
       if (playing) {
