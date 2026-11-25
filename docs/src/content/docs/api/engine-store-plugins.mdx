@@ -1,0 +1,1440 @@
+---
+title: Engine、Store 与 Plugins
+description: 时间缩放、布局、虚拟化、吸附、命中测试、Store、CommandBus 与插件接口参考。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note">
+本页由 `scripts/gen-api-docs.mjs` 从以下源码入口自动提取生成：`src/engine/index.ts`、`src/store/index.ts`、`src/plugins/index.ts`。
+</Aside>
+
+## 类 (Classes)
+
+### `class TimelineStore`
+
+```ts
+class TimelineStore {
+  constructor(options: TimelineStoreOptions);
+  getState(): TimelineState;
+  getSnapshot(): TimelineState;
+  getHistoryMode(): HistoryMode;
+  setHistoryMode(mode: HistoryMode): void;
+  setExternalHistoryState(flags: { canUndo?: boolean; canRedo?: boolean; }): void;
+  setDocument(doc: TimelineDocument, options?: { pushHistory?: boolean; dirty?: readonly RenderChannel[]; selectionClipIds?: readonly string[]; primaryClipId?: string | null; }): boolean;
+  setCurrentFrame(frame: number): boolean;
+  setTrackScale(scale: number, renderHints?: Partial<TimelineRenderHints>): boolean;
+  setRenderHints(hints: Partial<TimelineRenderHints>): boolean;
+  setTheme(theme: ThemeMode): boolean;
+  setMagnetEnabled(enabled: boolean): boolean;
+  toggleMagnetEnabled(): boolean;
+  setSelection(clipIds: readonly string[], primaryClipId?: string | null): boolean;
+  clearSelection(): boolean;
+  undo(): boolean;
+  redo(): boolean;
+  subscribe(listener: (change: TimelineStateChange) => void): () => void;
+  subscribeSelector<TSelected>(selector: (state: TimelineState) => TSelected, listener: (selected: TSelected, prevSelected: TSelected) => void, isEqual?: (a: TSelected, b: TSelected) => boolean): () => void;
+}
+```
+
+### `class CommandBus`
+
+```ts
+class CommandBus {
+  constructor(context: CommandContext);
+  register<TPayload = any>(type: string, spec: CommandSpec<TPayload>): () => void;
+  unregister(type: string): void;
+  registerAlias(alias: string, targetType: string): () => void;
+  resolveType(type: string): string;
+  has(type: string): boolean;
+  addBeforeHook(hook: BeforeCommandHook): () => void;
+  addAfterHook(hook: AfterCommandHook): () => void;
+  canExecute(type: string, payload?: unknown): boolean;
+  execute(type: string, payload?: unknown): boolean;
+}
+```
+
+### `class InteractionManager`
+
+```ts
+class InteractionManager {
+  constructor(context: Omit<PluginContext, 'getSnapProviders'>);
+  getContext(): PluginContext;
+  getSnapProviders(): readonly SnapProvider[];
+  setShortcutsEnabled(enabled: boolean): void;
+  isShortcutsEnabled(): boolean;
+  setKeyBinding(chord: string, binding: KeyBinding | null): void;
+  use(plugin: TimelinePlugin): () => void;
+  remove(name: string): boolean;
+  hasPlugin(name: string): boolean;
+  hasActiveSession(): boolean;
+  handlePointerDown(event: TimelinePointerEvent): boolean;
+  handlePointerMove(event: TimelinePointerEvent): boolean;
+  handlePointerUp(event: TimelinePointerEvent): boolean;
+  cancelActiveSession(): boolean;
+  handleWheel(event: TimelineWheelEvent): boolean;
+  handleDragOver(event: TimelineDropEvent): boolean;
+  handleDragLeave(): void;
+  handleDrop(event: TimelineDropEvent): boolean;
+  handleKeyDown(event: KeyboardEvent): boolean;
+  handleKeyUp(event: KeyboardEvent): boolean;
+  destroy(): void;
+}
+```
+
+## 函数 (Functions)
+
+### `clampTrackScale()`
+
+```ts
+function clampTrackScale(scale: number): number
+```
+
+### `getPixelsPerSecond()`
+
+```ts
+function getPixelsPerSecond(scale: number, fps?: number): number
+```
+
+### `getGridSize()`
+
+```ts
+function getGridSize(scale: number, fps?: number): number
+```
+
+### `getFramePixel()`
+
+```ts
+function getFramePixel(scale: number, fps?: number): number
+```
+
+### `msToPx()`
+
+```ts
+function msToPx(ms: number, pixelsPerSecond: number): number
+```
+
+### `pxToMs()`
+
+```ts
+function pxToMs(px: number, pixelsPerSecond: number): number
+```
+
+### `frameToSeconds()`
+
+```ts
+function frameToSeconds(frame: number, fps: number): number
+```
+
+### `secondsToFrame()`
+
+```ts
+function secondsToFrame(seconds: number, fps: number): number
+```
+
+### `msToFrame()`
+
+```ts
+function msToFrame(ms: number, fps: number): number
+```
+
+### `frameToMs()`
+
+```ts
+function frameToMs(frame: number, fps: number): number
+```
+
+### `pxToFrame()`
+
+```ts
+function pxToFrame(px: number, scale: number, fps: number): number
+```
+
+### `scaleToPixelsPerSecond()`
+
+```ts
+function scaleToPixelsPerSecond(scale: number, fps?: number): number
+```
+
+### `getTrackHeight()`
+
+```ts
+function getTrackHeight(config?: TrackLayoutConfigEntry): number
+```
+
+### `computeTimelineLayout()`
+
+```ts
+function computeTimelineLayout(doc: TimelineDocument, options: { trackScale: number; trackConfigs?: Record<string, TrackLayoutConfigEntry | undefined>; viewportHeight?: number; trackGap?: number; paddingTop?: number; }): TimelineLayoutSnapshot
+```
+
+### `computeVisibleRange()`
+
+```ts
+function computeVisibleRange(scrollLeft: number, viewportWidth: number, pixelsPerSecond: number, paddingLeft?: number, overscanPx?: number): VisibleTimeRange
+```
+
+### `isClipInVisibleRange()`
+
+```ts
+function isClipInVisibleRange(clip: Pick<LayoutClip, "startMs" | "endMs">, range: VisibleTimeRange): boolean
+```
+
+### `filterVisibleClips()`
+
+```ts
+function filterVisibleClips(clips: readonly LayoutClip[], range: VisibleTimeRange, alwaysIncludeIds?: ReadonlySet<string>): LayoutClip[]
+```
+
+### `isMagnetTrack()`
+
+```ts
+function isMagnetTrack(track: TimelineTrack | undefined, magnetEnabled: boolean): boolean
+```
+
+### `calculateMagnetArrangement()`
+
+```ts
+function calculateMagnetArrangement(track: TimelineTrack, dragClipStartMs: number, dragClipDurationMs: number, cursorX: number, targetTrackLayout?: Pick<LayoutTrack, "clips">, excludeClipId?: string): { insertPosition: number; newArrangement: TimelineClip[]; affectedClips: MagnetAffectedClip[]; }
+```
+
+### `detectMagnetState()`
+
+```ts
+function detectMagnetState(options: { tracks: readonly TimelineTrack[]; tracksLayout: readonly (Pick<LayoutTrack, "clips"> | undefined)[]; targetTrackIndex: number; isNewTrack: boolean; targetX: number; cursorX: number; dragClipDurationMs: number; sourceTrackIndex: number; sourceClipId: string; pixelToMs: (pixel: number) => number; magnetEnabled: boolean; }): MagnetDetectionResult
+```
+
+### `getMagnetPreviewTransforms()`
+
+```ts
+function getMagnetPreviewTransforms(magnetState: TimelineMagnetState, dragClipId: string, msToPixel: (ms: number) => number, targetTrackLayout?: Pick<LayoutTrack, "clips">): MagnetPreviewTransform[]
+```
+
+### `checkTrackOverlap()`
+
+```ts
+function checkTrackOverlap(tracks: readonly TimelineTrack[], targetTrackIndex: number, startMs: number, endMs: number, excludeClipId?: string, policies?: EditPolicies, magnetEnabled?: boolean): boolean
+```
+
+### `resolveTargetTrack()`
+
+```ts
+function resolveTargetTrack(tracks: readonly TimelineTrack[], tracksLayout: readonly Pick<LayoutTrack, "startY" | "endY" | "type">[], y: number, dragClip: Pick<TimelineClip, "id" | "type" | "startMs" | "endMs">, options: { targetStartMs: number; sourceTrackIndex?: number; magnetEnabled: boolean; policies?: EditPolicies; }): PlacementTargetInfo
+```
+
+### `collectSnapPoints()`
+
+```ts
+function collectSnapPoints(providers: readonly SnapProvider[], ctx: SnapContext): SnapPoint[]
+```
+
+### `findBestSnap()`
+
+```ts
+function findBestSnap(targetLeftPx: number, durationMs: number, points: readonly SnapPoint[], pixelsPerSecond: number, thresholdPx?: number): SnapResult | null
+```
+
+### `hitTestLayout()`
+
+```ts
+function hitTestLayout(layout: TimelineLayoutSnapshot, doc: TimelineDocument, options: HitTestOptions): TimelineHitTarget
+```
+
+### `registerBuiltinCommands()`
+
+```ts
+function registerBuiltinCommands(bus: CommandBus): void
+```
+
+### `createDefaultPlugins()`
+
+```ts
+function createDefaultPlugins(options?: DefaultPluginsOptions): TimelinePlugin[]
+```
+
+### `matchesKeyChord()`
+
+```ts
+function matchesKeyChord(event: KeyboardEvent, chord: string): boolean
+```
+
+### `createGridSnapProvider()`
+
+```ts
+function createGridSnapProvider(options?: GridSnapProviderOptions): SnapProvider
+```
+
+### `createPlayheadPlugin()`
+
+```ts
+function createPlayheadPlugin(): TimelinePlugin
+```
+
+### `createClipTrimPlugin()`
+
+```ts
+function createClipTrimPlugin(): TimelinePlugin
+```
+
+### `createClipDragPlugin()`
+
+```ts
+function createClipDragPlugin(): TimelinePlugin
+```
+
+### `createSelectionPlugin()`
+
+```ts
+function createSelectionPlugin(): TimelinePlugin
+```
+
+### `createWheelPlugin()`
+
+```ts
+function createWheelPlugin(): TimelinePlugin
+```
+
+### `createShortcutsPlugin()`
+
+```ts
+function createShortcutsPlugin(options?: ShortcutsPluginOptions): TimelinePlugin
+```
+
+### `createMarqueeSelectPlugin()`
+
+```ts
+function createMarqueeSelectPlugin(): TimelinePlugin
+```
+
+### `createExternalDropPlugin()`
+
+```ts
+function createExternalDropPlugin(options: ExternalDropPluginOptions): TimelinePlugin
+```
+
+## 类型与接口 (Types & Interfaces)
+
+### `interface TrackLayoutConfigEntry`
+
+```ts
+interface TrackLayoutConfigEntry {
+  height?: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `height?` | `number` |
+
+### `interface LayoutClip`
+
+```ts
+interface LayoutClip {
+  clip: TimelineClip
+  track: TimelineTrack
+  trackIndex: number
+  clipIndex: number
+  type: string
+  startMs: number
+  endMs: number
+  leftPx: number
+  widthPx: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clip` | `TimelineClip` |
+| `track` | `TimelineTrack` |
+| `trackIndex` | `number` |
+| `clipIndex` | `number` |
+| `type` | `string` |
+| `startMs` | `number` |
+| `endMs` | `number` |
+| `leftPx` | `number` |
+| `widthPx` | `number` |
+
+### `interface LayoutTrack`
+
+```ts
+interface LayoutTrack {
+  track: TimelineTrack
+  trackIndex: number
+  type: string
+  height: number
+  startY: number
+  endY: number
+  clips: LayoutClip[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `track` | `TimelineTrack` |
+| `trackIndex` | `number` |
+| `type` | `string` |
+| `height` | `number` |
+| `startY` | `number` |
+| `endY` | `number` |
+| `clips` | `LayoutClip[]` |
+
+### `interface TimelineLayoutSnapshot`
+
+```ts
+interface TimelineLayoutSnapshot {
+  fps: number
+  trackScale: number
+  framePixel: number
+  pixelsPerSecond: number
+  totalDurationMs: number
+  totalDurationSec: number
+  contentTop: number
+  contentBottom: number
+  contentHeight: number
+  tracks: LayoutTrack[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `fps` | `number` |
+| `trackScale` | `number` |
+| `framePixel` | `number` |
+| `pixelsPerSecond` | `number` |
+| `totalDurationMs` | `number` |
+| `totalDurationSec` | `number` |
+| `contentTop` | `number` |
+| `contentBottom` | `number` |
+| `contentHeight` | `number` |
+| `tracks` | `LayoutTrack[]` |
+
+### `interface VisibleTimeRange`
+
+```ts
+interface VisibleTimeRange {
+  startMs: number
+  endMs: number
+  startPx: number
+  endPx: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `startMs` | `number` |
+| `endMs` | `number` |
+| `startPx` | `number` |
+| `endPx` | `number` |
+
+### `interface MagnetAffectedClip`
+
+```ts
+interface MagnetAffectedClip {
+  clipId: string
+  originalStartMs: number
+  originalEndMs: number
+  newStartMs: number
+  newEndMs: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clipId` | `string` |
+| `originalStartMs` | `number` |
+| `originalEndMs` | `number` |
+| `newStartMs` | `number` |
+| `newEndMs` | `number` |
+
+### `interface TimelineMagnetState`
+
+```ts
+interface TimelineMagnetState {
+  isEnabled: boolean
+  targetTrackIndex: number
+  insertPosition: number
+  dragClipDurationMs: number
+  affectedClips: MagnetAffectedClip[]
+  previewArrangement: TimelineClip[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `isEnabled` | `boolean` |
+| `targetTrackIndex` | `number` |
+| `insertPosition` | `number` |
+| `dragClipDurationMs` | `number` |
+| `affectedClips` | `MagnetAffectedClip[]` |
+| `previewArrangement` | `TimelineClip[]` |
+
+### `interface MagnetPreviewTransform`
+
+```ts
+interface MagnetPreviewTransform {
+  clipId: string
+  offsetX: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clipId` | `string` |
+| `offsetX` | `number` |
+
+### `interface MagnetDetectionResult`
+
+```ts
+interface MagnetDetectionResult {
+  magnetState?: TimelineMagnetState
+  isMagnetMode: boolean
+  reason?: 'new-track' | 'invalid-track' | 'non-magnet-track' | 'magnet-disabled'
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `magnetState?` | `TimelineMagnetState` |
+| `isMagnetMode` | `boolean` |
+| `reason?` | `'new-track' \| 'invalid-track' \| 'non-magnet-track' \| 'magnet-disabled'` |
+
+### `interface PlacementTargetInfo`
+
+```ts
+interface PlacementTargetInfo {
+  isNewTrack: boolean
+  insertIndex: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `isNewTrack` | `boolean` |
+| `insertIndex` | `number` |
+
+### `interface SnapPoint`
+
+```ts
+interface SnapPoint {
+  timeMs: number
+  x: number
+  source: string
+  clipId?: string
+  kind?: 'start' | 'end' | 'playhead' | 'grid' | 'custom'
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `timeMs` | `number` |
+| `x` | `number` |
+| `source` | `string` |
+| `clipId?` | `string` |
+| `kind?` | `'start' \| 'end' \| 'playhead' \| 'grid' \| 'custom'` |
+
+### `interface SnapContext`
+
+```ts
+interface SnapContext {
+  layout: TimelineLayoutSnapshot
+  currentFrame: number
+  excludeClipIds: ReadonlySet<string>
+  targetLeftPx: number
+  durationMs: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `layout` | `TimelineLayoutSnapshot` |
+| `currentFrame` | `number` |
+| `excludeClipIds` | `ReadonlySet<string>` |
+| `targetLeftPx` | `number` |
+| `durationMs` | `number` |
+
+### `interface SnapProvider`
+
+```ts
+interface SnapProvider {
+  id: string
+  getSnapPoints: (ctx: SnapContext) => SnapPoint[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `getSnapPoints` | `(ctx: SnapContext) => SnapPoint[]` |
+
+### `interface SnapResult`
+
+```ts
+interface SnapResult {
+  leftPx: number
+  startMs: number
+  guidelineX: number
+  point: SnapPoint
+  edge: 'start' | 'end'
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `leftPx` | `number` |
+| `startMs` | `number` |
+| `guidelineX` | `number` |
+| `point` | `SnapPoint` |
+| `edge` | `'start' \| 'end'` |
+
+### `type HitZone`
+
+```ts
+type HitZone
+  = | 'clip-body'
+    | 'trim-start'
+    | 'trim-end'
+    | 'ruler'
+    | 'playhead'
+    | 'track-empty'
+    | 'sidebar'
+    | 'toolbar'
+    | 'outside'
+```
+
+### `interface TimelineHitTarget`
+
+```ts
+interface TimelineHitTarget {
+  zone: HitZone
+  timeMs: number
+  frame: number
+  x: number
+  y: number
+  trackIndex: number
+  clipIndex: number
+  clipId: string | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `zone` | `HitZone` |
+| `timeMs` | `number` |
+| `frame` | `number` |
+| `x` | `number` |
+| `y` | `number` |
+| `trackIndex` | `number` |
+| `clipIndex` | `number` |
+| `clipId` | `string \| null` |
+
+### `interface HitTestOptions`
+
+```ts
+interface HitTestOptions {
+  x: number
+  y: number
+  trimHandleWidthPx?: number
+  minClipWidthPx?: number
+  zoneHint?: HitZone
+  hintClipId?: string | null
+  hintTrackIndex?: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `x` | `number` |
+| `y` | `number` |
+| `trimHandleWidthPx?` | `number` |
+| `minClipWidthPx?` | `number` |
+| `zoneHint?` | `HitZone` |
+| `hintClipId?` | `string \| null` |
+| `hintTrackIndex?` | `number` |
+
+### `interface TimelineStoreOptions`
+
+```ts
+interface TimelineStoreOptions {
+  document: TimelineDocument
+  currentFrame?: number
+  trackScale?: number
+  isMagnetEnabled?: boolean
+  renderHints?: Partial<TimelineRenderHints>
+  theme?: ThemeMode
+  historyMode?: HistoryMode
+  maxHistory?: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `document` | `TimelineDocument` |
+| `currentFrame?` | `number` |
+| `trackScale?` | `number` |
+| `isMagnetEnabled?` | `boolean` |
+| `renderHints?` | `Partial<TimelineRenderHints>` |
+| `theme?` | `ThemeMode` |
+| `historyMode?` | `HistoryMode` |
+| `maxHistory?` | `number` |
+
+### `type RenderChannel`
+
+```ts
+type RenderChannel
+  = | 'toolbar'
+    | 'sidebar'
+    | 'ruler'
+    | 'tracks'
+    | 'selection'
+    | 'playhead'
+    | 'overlay'
+```
+
+### `interface TimelineRenderHints`
+
+```ts
+interface TimelineRenderHints {
+  zoomActive: boolean
+  settleVersion: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `zoomActive` | `boolean` |
+| `settleVersion` | `number` |
+
+### `type ThemeMode`
+
+```ts
+type ThemeMode = 'light' | 'dark' | 'auto'
+```
+
+### `type HistoryMode`
+
+```ts
+type HistoryMode = 'internal' | 'external'
+```
+
+### `interface TimelineState`
+
+```ts
+interface TimelineState {
+  document: TimelineDocument
+  currentFrame: number
+  trackScale: number
+  isMagnetEnabled: boolean
+  selection: TimelineSelection
+  canUndo: boolean
+  canRedo: boolean
+  renderHints: TimelineRenderHints
+  theme: ThemeMode
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `document` | `TimelineDocument` |
+| `currentFrame` | `number` |
+| `trackScale` | `number` |
+| `isMagnetEnabled` | `boolean` |
+| `selection` | `TimelineSelection` |
+| `canUndo` | `boolean` |
+| `canRedo` | `boolean` |
+| `renderHints` | `TimelineRenderHints` |
+| `theme` | `ThemeMode` |
+
+### `interface TimelineStateChange`
+
+```ts
+interface TimelineStateChange {
+  state: TimelineState
+  prevState: TimelineState
+  dirty: ReadonlySet<RenderChannel>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `state` | `TimelineState` |
+| `prevState` | `TimelineState` |
+| `dirty` | `ReadonlySet<RenderChannel>` |
+
+### `interface TimelineCommand`
+
+```ts
+interface TimelineCommand<TPayload = unknown> {
+  type: string
+  payload?: TPayload
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `type` | `string` |
+| `payload?` | `TPayload` |
+
+### `interface TimelineStoreLike`
+
+```ts
+interface TimelineStoreLike {
+  getState: () => TimelineState
+  getSnapshot: () => TimelineState
+  setDocument: (
+    doc: TimelineDocument,
+    options?: {
+      pushHistory?: boolean
+      dirty?: readonly RenderChannel[]
+      selectionClipIds?: readonly string[]
+      primaryClipId?: string | null
+    },
+  ) => boolean
+  setCurrentFrame: (frame: number) => boolean
+  setTrackScale: (scale: number, renderHints?: Partial<TimelineRenderHints>) => boolean
+  setRenderHints: (hints: Partial<TimelineRenderHints>) => boolean
+  setTheme: (theme: ThemeMode) => boolean
+  setMagnetEnabled: (enabled: boolean) => boolean
+  toggleMagnetEnabled: () => boolean
+  setSelection: (clipIds: readonly string[], primaryClipId?: string | null) => boolean
+  clearSelection: () => boolean
+  undo: () => boolean
+  redo: () => boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `getState` | `() => TimelineState` |
+| `getSnapshot` | `() => TimelineState` |
+| `setDocument` | `( doc: TimelineDocument, options?: { pushHistory?: boolean dirty?: readonly RenderChannel[] selectionClipIds?: readonly string[] primaryClipId?: string \| null }, ) => boolean` |
+| `setCurrentFrame` | `(frame: number) => boolean` |
+| `setTrackScale` | `(scale: number, renderHints?: Partial<TimelineRenderHints>) => boolean` |
+| `setRenderHints` | `(hints: Partial<TimelineRenderHints>) => boolean` |
+| `setTheme` | `(theme: ThemeMode) => boolean` |
+| `setMagnetEnabled` | `(enabled: boolean) => boolean` |
+| `toggleMagnetEnabled` | `() => boolean` |
+| `setSelection` | `(clipIds: readonly string[], primaryClipId?: string \| null) => boolean` |
+| `clearSelection` | `() => boolean` |
+| `undo` | `() => boolean` |
+| `redo` | `() => boolean` |
+
+### `interface CommandContext`
+
+```ts
+interface CommandContext {
+  store: TimelineStoreLike
+  getPolicies: () => EditPolicies
+  fitToView?: () => number | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `store` | `TimelineStoreLike` |
+| `getPolicies` | `() => EditPolicies` |
+| `fitToView?` | `() => number \| null` |
+
+### `interface CommandSpec`
+
+```ts
+interface CommandSpec<TPayload = any> {
+  canExecute?: (ctx: CommandContext, payload: TPayload) => boolean
+  execute: (ctx: CommandContext, payload: TPayload) => boolean | void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `canExecute?` | `(ctx: CommandContext, payload: TPayload) => boolean` |
+| `execute` | `(ctx: CommandContext, payload: TPayload) => boolean \| void` |
+
+### `type BeforeCommandHook`
+
+```ts
+type BeforeCommandHook = (
+  command: TimelineCommand,
+  ctx: CommandContext,
+) => boolean | TimelineCommand | void
+```
+
+### `type AfterCommandHook`
+
+```ts
+type AfterCommandHook = (
+  command: TimelineCommand,
+  executed: boolean,
+  ctx: CommandContext,
+) => void
+```
+
+### `interface ClipMovePayload`
+
+```ts
+interface ClipMovePayload {
+  sourceTrackIndex: number
+  sourceClipIndex: number
+  targetTrackIndex: number
+  isNewTrack: boolean
+  startMs: number
+  endMs: number
+  clipType?: string
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `sourceTrackIndex` | `number` |
+| `sourceClipIndex` | `number` |
+| `targetTrackIndex` | `number` |
+| `isNewTrack` | `boolean` |
+| `startMs` | `number` |
+| `endMs` | `number` |
+| `clipType?` | `string` |
+
+### `interface ClipMagnetMovePayload`
+
+```ts
+interface ClipMagnetMovePayload {
+  sourceTrackIndex: number
+  sourceClipIndex: number
+  targetTrackIndex: number
+  insertPosition: number
+  previewArrangement: TimelineClip[]
+  dragClipDurationMs: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `sourceTrackIndex` | `number` |
+| `sourceClipIndex` | `number` |
+| `targetTrackIndex` | `number` |
+| `insertPosition` | `number` |
+| `previewArrangement` | `TimelineClip[]` |
+| `dragClipDurationMs` | `number` |
+
+### `interface ClipTrimPayload`
+
+```ts
+interface ClipTrimPayload {
+  trackIndex: number
+  clipIndex: number
+  offsetMs: number
+  edge: 'start' | 'end'
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackIndex` | `number` |
+| `clipIndex` | `number` |
+| `offsetMs` | `number` |
+| `edge` | `'start' \| 'end'` |
+
+### `interface ClipSplitPayload`
+
+```ts
+interface ClipSplitPayload {
+  trackIndex?: number
+  clipIndex?: number
+  splitMs?: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackIndex?` | `number` |
+| `clipIndex?` | `number` |
+| `splitMs?` | `number` |
+
+### `interface ClipDeletePayload`
+
+```ts
+interface ClipDeletePayload {
+  clipIds?: string[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clipIds?` | `string[]` |
+
+### `interface ClipInsertPayload`
+
+```ts
+interface ClipInsertPayload {
+  trackIndex: number
+  isNewTrack: boolean
+  clip: TimelineClip
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackIndex` | `number` |
+| `isNewTrack` | `boolean` |
+| `clip` | `TimelineClip` |
+
+### `interface TrackToggleFlagPayload`
+
+```ts
+interface TrackToggleFlagPayload {
+  trackIndex: number
+  flag: 'locked' | 'visible' | 'muted'
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackIndex` | `number` |
+| `flag` | `'locked' \| 'visible' \| 'muted'` |
+
+### `interface SelectionSetPayload`
+
+```ts
+interface SelectionSetPayload {
+  clipIds?: string[]
+  clipId?: string | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clipIds?` | `string[]` |
+| `clipId?` | `string \| null` |
+
+### `interface PlayheadSetPayload`
+
+```ts
+interface PlayheadSetPayload {
+  frame: number
+  clampToDuration?: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `frame` | `number` |
+| `clampToDuration?` | `boolean` |
+
+### `interface ScaleSetPayload`
+
+```ts
+interface ScaleSetPayload {
+  scale: number
+  renderHints?: Partial<TimelineRenderHints>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `scale` | `number` |
+| `renderHints?` | `Partial<TimelineRenderHints>` |
+
+### `interface GridSnapProviderOptions`
+
+```ts
+interface GridSnapProviderOptions {
+  stepMs?: number
+  enabled?: () => boolean
+  radiusSteps?: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `stepMs?` | `number` |
+| `enabled?` | `() => boolean` |
+| `radiusSteps?` | `number` |
+
+### `interface ShortcutsPluginOptions`
+
+```ts
+interface ShortcutsPluginOptions {
+  enabled?: boolean
+  keymap?: Record<string, KeyBinding | null>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `enabled?` | `boolean` |
+| `keymap?` | `Record<string, KeyBinding \| null>` |
+
+### `interface ExternalDropItem`
+
+```ts
+interface ExternalDropItem {
+  id?: string
+  type: string
+  name: string
+  durationMs: number
+  resource?: string
+  meta?: Record<string, unknown>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id?` | `string` |
+| `type` | `string` |
+| `name` | `string` |
+| `durationMs` | `number` |
+| `resource?` | `string` |
+| `meta?` | `Record<string, unknown>` |
+
+### `interface ExternalDropPluginOptions`
+
+```ts
+interface ExternalDropPluginOptions {
+  resolveItem: (event: TimelineDropEvent) => ExternalDropItem | null | undefined
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `resolveItem` | `(event: TimelineDropEvent) => ExternalDropItem \| null \| undefined` |
+
+### `interface DefaultPluginsOptions`
+
+```ts
+interface DefaultPluginsOptions {
+  shortcuts?: boolean | ShortcutsPluginOptions
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `shortcuts?` | `boolean \| ShortcutsPluginOptions` |
+
+### `interface DragPreviewBox`
+
+```ts
+interface DragPreviewBox {
+  leftPx: number
+  topPx: number
+  widthPx: number
+  heightPx: number
+  label?: string
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `leftPx` | `number` |
+| `topPx` | `number` |
+| `widthPx` | `number` |
+| `heightPx` | `number` |
+| `label?` | `string` |
+
+### `interface MarqueeRect`
+
+```ts
+interface MarqueeRect {
+  leftPx: number
+  topPx: number
+  widthPx: number
+  heightPx: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `leftPx` | `number` |
+| `topPx` | `number` |
+| `widthPx` | `number` |
+| `heightPx` | `number` |
+
+### `interface OverlayState`
+
+```ts
+interface OverlayState {
+  verticalGuidelinePx: number | null
+  horizontalGuidelinePx: number | null
+  dragPreview: DragPreviewBox | null
+  marqueeRect: MarqueeRect | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `verticalGuidelinePx` | `number \| null` |
+| `horizontalGuidelinePx` | `number \| null` |
+| `dragPreview` | `DragPreviewBox \| null` |
+| `marqueeRect` | `MarqueeRect \| null` |
+
+### `interface ClipPreviewOverride`
+
+```ts
+interface ClipPreviewOverride {
+  leftPx?: number
+  widthPx?: number
+  translateX?: number
+  translateY?: number
+  isDragging?: boolean
+  isTrimming?: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `leftPx?` | `number` |
+| `widthPx?` | `number` |
+| `translateX?` | `number` |
+| `translateY?` | `number` |
+| `isDragging?` | `boolean` |
+| `isTrimming?` | `boolean` |
+
+### `interface ViewportMetrics`
+
+```ts
+interface ViewportMetrics {
+  scrollLeft: number
+  scrollTop: number
+  clientWidth: number
+  clientHeight: number
+  trackPaddingLeft: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `scrollLeft` | `number` |
+| `scrollTop` | `number` |
+| `clientWidth` | `number` |
+| `clientHeight` | `number` |
+| `trackPaddingLeft` | `number` |
+
+### `interface PluginRendererPort`
+
+```ts
+interface PluginRendererPort {
+  getLayout: () => TimelineLayoutSnapshot
+  getViewportMetrics: () => ViewportMetrics
+  setScrollLeft: (scrollLeft: number) => void
+  setOverlay: (patch: Partial<OverlayState>) => void
+  clearOverlay: () => void
+  setClipPreview: (clipId: string, override: ClipPreviewOverride | null) => void
+  clearAllClipPreviews: () => void
+  lockUserSelect?: () => void
+  restoreUserSelect?: () => void
+  focusContainer?: () => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `getLayout` | `() => TimelineLayoutSnapshot` |
+| `getViewportMetrics` | `() => ViewportMetrics` |
+| `setScrollLeft` | `(scrollLeft: number) => void` |
+| `setOverlay` | `(patch: Partial<OverlayState>) => void` |
+| `clearOverlay` | `() => void` |
+| `setClipPreview` | `(clipId: string, override: ClipPreviewOverride \| null) => void` |
+| `clearAllClipPreviews` | `() => void` |
+| `lockUserSelect?` | `() => void` |
+| `restoreUserSelect?` | `() => void` |
+| `focusContainer?` | `() => void` |
+
+### `interface TimelinePointerEvent`
+
+```ts
+interface TimelinePointerEvent {
+  originalEvent: PointerEvent
+  hit: TimelineHitTarget
+  clientX: number
+  clientY: number
+  shiftKey: boolean
+  ctrlKey: boolean
+  metaKey: boolean
+  altKey: boolean
+  button: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `originalEvent` | `PointerEvent` |
+| `hit` | `TimelineHitTarget` |
+| `clientX` | `number` |
+| `clientY` | `number` |
+| `shiftKey` | `boolean` |
+| `ctrlKey` | `boolean` |
+| `metaKey` | `boolean` |
+| `altKey` | `boolean` |
+| `button` | `number` |
+
+### `interface TimelineWheelEvent`
+
+```ts
+interface TimelineWheelEvent {
+  originalEvent: WheelEvent
+  hit: TimelineHitTarget
+  deltaX: number
+  deltaY: number
+  ctrlKey: boolean
+  metaKey: boolean
+  shiftKey: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `originalEvent` | `WheelEvent` |
+| `hit` | `TimelineHitTarget` |
+| `deltaX` | `number` |
+| `deltaY` | `number` |
+| `ctrlKey` | `boolean` |
+| `metaKey` | `boolean` |
+| `shiftKey` | `boolean` |
+
+### `interface TimelineDropEvent`
+
+```ts
+interface TimelineDropEvent {
+  originalEvent: DragEvent
+  hit: TimelineHitTarget
+  dataTransfer: DataTransfer | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `originalEvent` | `DragEvent` |
+| `hit` | `TimelineHitTarget` |
+| `dataTransfer` | `DataTransfer \| null` |
+
+### `interface InteractionSession`
+
+```ts
+interface InteractionSession {
+  onMove?: (event: TimelinePointerEvent) => void
+  onEnd?: (event: TimelinePointerEvent) => void
+  onCancel?: () => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `onMove?` | `(event: TimelinePointerEvent) => void` |
+| `onEnd?` | `(event: TimelinePointerEvent) => void` |
+| `onCancel?` | `() => void` |
+
+### `interface InteractionHandler`
+
+```ts
+interface InteractionHandler {
+  id: string
+  priority: number
+  onPointerDown?: (event: TimelinePointerEvent, ctx: PluginContext) => InteractionSession | null | void
+  onWheel?: (event: TimelineWheelEvent, ctx: PluginContext) => boolean | void
+  onDragOver?: (event: TimelineDropEvent, ctx: PluginContext) => boolean | void
+  onDragLeave?: (ctx: PluginContext) => void
+  onDrop?: (event: TimelineDropEvent, ctx: PluginContext) => boolean | void
+  onKeyDown?: (event: KeyboardEvent, ctx: PluginContext) => boolean | void
+  onKeyUp?: (event: KeyboardEvent, ctx: PluginContext) => boolean | void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `priority` | `number` |
+| `onPointerDown?` | `(event: TimelinePointerEvent, ctx: PluginContext) => InteractionSession \| null \| void` |
+| `onWheel?` | `(event: TimelineWheelEvent, ctx: PluginContext) => boolean \| void` |
+| `onDragOver?` | `(event: TimelineDropEvent, ctx: PluginContext) => boolean \| void` |
+| `onDragLeave?` | `(ctx: PluginContext) => void` |
+| `onDrop?` | `(event: TimelineDropEvent, ctx: PluginContext) => boolean \| void` |
+| `onKeyDown?` | `(event: KeyboardEvent, ctx: PluginContext) => boolean \| void` |
+| `onKeyUp?` | `(event: KeyboardEvent, ctx: PluginContext) => boolean \| void` |
+
+### `type KeyBinding`
+
+```ts
+type KeyBinding = string | ((event: KeyboardEvent, ctx: PluginContext) => boolean | void)
+```
+
+### `interface PluginContext`
+
+```ts
+interface PluginContext {
+  store: TimelineStore
+  commands: CommandBus
+  renderer: PluginRendererPort
+  getPolicies: () => EditPolicies
+  getSnapProviders: () => readonly SnapProvider[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `store` | `TimelineStore` |
+| `commands` | `CommandBus` |
+| `renderer` | `PluginRendererPort` |
+| `getPolicies` | `() => EditPolicies` |
+| `getSnapProviders` | `() => readonly SnapProvider[]` |
+
+### `interface TimelinePlugin`
+
+```ts
+interface TimelinePlugin {
+  name: string
+  commands?: Record<string, CommandSpec<any>>
+  keymap?: Record<string, KeyBinding | null>
+  interactions?: InteractionHandler[]
+  snapProviders?: SnapProvider[]
+  setup?: (ctx: PluginContext) => (() => void) | void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `name` | `string` |
+| `commands?` | `Record<string, CommandSpec<any>>` |
+| `keymap?` | `Record<string, KeyBinding \| null>` |
+| `interactions?` | `InteractionHandler[]` |
+| `snapProviders?` | `SnapProvider[]` |
+| `setup?` | `(ctx: PluginContext) => (() => void) \| void` |
+
+## 常量 (Constants)
+
+### `DEFAULT_TRACK_HEIGHT`
+
+```ts
+const DEFAULT_TRACK_HEIGHT: 64
+```
+
+### `DEFAULT_TRACK_GAP`
+
+```ts
+const DEFAULT_TRACK_GAP: 4
+```
+
+### `DEFAULT_TRACK_PADDING_TOP`
+
+```ts
+const DEFAULT_TRACK_PADDING_TOP: 20
+```
+
+### `DEFAULT_OVERSCAN_PX`
+
+```ts
+const DEFAULT_OVERSCAN_PX: 240
+```
+
+### `playheadSnapProvider`
+
+```ts
+const playheadSnapProvider: SnapProvider
+```
+
+### `clipEdgeSnapProvider`
+
+```ts
+const clipEdgeSnapProvider: SnapProvider
+```
+
+### `DEFAULT_SHORTCUT_KEYMAP`
+
+```ts
+const DEFAULT_SHORTCUT_KEYMAP: Record<string, KeyBinding>
+```

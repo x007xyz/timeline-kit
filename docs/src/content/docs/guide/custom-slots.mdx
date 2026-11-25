@@ -1,0 +1,64 @@
+---
+title: 自定义插槽与花字/图片
+description: 使用 mount / update / destroy 生命周期插槽高效渲染花字、贴纸、图片缩略图与复杂业务组件。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+`trackConfigs[type].clip` 和 `trackConfigs[type].icon` 支持两种写法：
+
+- **简单工厂函数**：`clip: (ctx) => HTMLElement | string | null`（适合纯静态或轻量节点）。
+- **生命周期对象（推荐）**：`clip: { mount(host, ctx) { return { update, destroy } } }`。
+
+## 为什么推荐 `mount / update / destroy`？
+
+在老版本或简单实现中，每次播放头跳转、选区变更或文本微调都会销毁并重建整个片段 DOM，导致以下问题：
+
+1. 图片 `<img>` 闪烁或重复触发解码；
+2. React / Vue 子组件丢失局部状态；
+3. 视口虚拟化滚出屏幕时无法通知宿主释放资源。
+
+采用生命周期协议后，`mount` 仅在片段进入视口时执行一次；后续选中态 (`ctx.isSelected`)、宽度 (`ctx.clipWidthPx`) 或业务属性变化时，只调用 `update(nextCtx)` 进行局部 DOM 更新：
+
+```ts
+import type { ClipRenderContext, SlotRendererObject } from 'timeline-kit'
+
+export const fancyTextSlot: SlotRendererObject<ClipRenderContext> = {
+  mount(host, ctx) {
+    const root = document.createElement('div')
+    const badge = document.createElement('span')
+    const text = document.createElement('span')
+    root.append(badge, text)
+
+    const apply = (next: ClipRenderContext) => {
+      const preset = String(next.clip.meta?.preset ?? 'neon')
+      root.className = `tk-fancy-clip is-${preset}`
+      badge.textContent = `花字 · ${preset}`
+      text.textContent = next.clip.resource ?? next.clip.name
+    }
+
+    apply(ctx)
+    host.replaceChildren(root)
+
+    return {
+      update(nextCtx) {
+        apply(nextCtx) // 原地更新，零节点销毁重建
+      },
+      destroy() {
+        host.replaceChildren()
+      },
+    }
+  },
+}
+```
+
+## 花字、贴纸与框选交互演示
+
+下方示例展示了 4 种花字预设（霓虹、综艺、渐变、字幕）、图片贴纸缩略图，以及锁定轨道在框选多选中的自动跳过保护；上方图文画板支持实时播放预览、点击拖拽解锁图层位置，并会阻止对锁定轨道贴纸的舞台拖拽：
+
+<TimelinePlayground scenario="fancy-text-graphics" height="340px" />
+
+<Aside type="tip">
+对于 React 与 Vue 3，官方适配层内置了基于 `createSlotBridge()` 的 `Portal` / `Teleport` 桥接器，宿主无需手动编写 `mount / update / destroy`，直接传入 JSX 或 `<template #clip>` 即可自动享受组件保活与虚拟化销毁。
+</Aside>

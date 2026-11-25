@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>timeline-kit v2 Multi-Scenario Studio Demo</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f19;
+        color: #e2e8f0;
+        font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        gap: 8px;
+        padding: 10px 14px;
+        box-sizing: border-box;
+      }
+      .demo-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: #111827;
+        border: 1px solid #1f2937;
+      }
+      .demo-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .demo-tab {
+        appearance: none;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #cbd5e1;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .demo-tab.is-active {
+        background: #2563eb;
+        border-color: #3b82f6;
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .demo-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      .demo-btn {
+        appearance: none;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .demo-btn.is-active {
+        border-color: #3b82f6;
+        color: #60a5fa;
+      }
+      .demo-top-stage {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+      }
+      #preview-host {
+        flex: 0 0 430px;
+      }
+      .demo-top-right {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .demo-materials {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #111827;
+        border: 1px solid #1f2937;
+      }
+      .demo-materials-label {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-right: 4px;
+      }
+      .demo-material-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px dashed #475569;
+        background: #1e293b;
+        color: #f8fafc;
+        font-size: 12px;
+        cursor: grab;
+        user-select: none;
+      }
+      .demo-material-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: #3b82f6;
+        color: #ffffff;
+      }
+      .demo-subpanel {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: #172554;
+        border: 1px solid #1d4ed8;
+        font-size: 12px;
+      }
+      .demo-subpanel.is-visible {
+        display: flex;
+      }
+      .demo-otio-panel {
+        display: none;
+        max-height: 96px;
+        overflow: auto;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        font-size: 11px;
+        white-space: pre-wrap;
+        color: #93c5fd;
+      }
+      .demo-otio-panel.is-visible {
+        display: block;
+      }
+      #readout {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: #111827;
+        border: 1px solid #1f2937;
+        color: #94a3b8;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      #timeline {
+        flex: 1 1 auto;
+        min-height: 300px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #1f2937;
+      }
+
+      /* Stage Canvas Workbench Styles */
+      .tk-preview-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        border-radius: 10px;
+        background: #111827;
+        border: 1px solid #1f2937;
+      }
+      .tk-stage-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .tk-stage-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .tk-stage-btn {
+        appearance: none;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #cbd5e1;
+        border-radius: 5px;
+        padding: 2px 7px;
+        font-size: 11px;
+        line-height: 1.35;
+        cursor: pointer;
+      }
+      .tk-stage-btn.is-active {
+        background: #1d4ed8;
+        border-color: #3b82f6;
+        color: #ffffff;
+      }
+      .tk-stage-snapshot-badge {
+        display: none;
+        font-size: 10px;
+        color: #34d399;
+        font-weight: 600;
+      }
+      .tk-stage-snapshot-badge.is-visible {
+        display: inline;
+      }
+      .tk-preview-stage {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #020617;
+      }
+      .tk-stage-frame {
+        position: relative;
+        height: 100%;
+        max-width: 100%;
+        aspect-ratio: 16 / 9;
+        box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.7);
+      }
+      .tk-stage-frame[data-aspect="9:16"] {
+        aspect-ratio: 9 / 16;
+      }
+      .tk-stage-frame[data-aspect="1:1"] {
+        aspect-ratio: 1 / 1;
+      }
+      .tk-preview-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .tk-stage-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 6;
+      }
+      .tk-stage-handle {
+        position: absolute;
+        pointer-events: auto;
+        cursor: move;
+        border: 1px dashed rgba(148, 163, 184, 0.55);
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+      .tk-stage-handle:hover,
+      .tk-stage-handle.is-selected {
+        border: 1.5px solid #38bdf8;
+        box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.45);
+      }
+      .tk-stage-handle.is-locked,
+      .tk-stage-handle.is-locked:hover {
+        border: 1px dashed rgba(245, 158, 11, 0.72);
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+      .tk-preview-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tk-preview-play-btn {
+        appearance: none;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #f8fafc;
+        border-radius: 5px;
+        padding: 2px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .tk-preview-play-btn.is-playing {
+        background: #2563eb;
+        border-color: #3b82f6;
+      }
+      .tk-preview-vu {
+        width: 56px;
+        height: 14px;
+        border-radius: 3px;
+        flex: 0 0 auto;
+      }
+      .tk-preview-timecode {
+        color: #e2e8f0;
+        flex: 0 0 auto;
+        margin-left: auto;
+      }
+      .tk-preview-meta-bar {
+        display: flex;
+        align-items: center;
+        min-height: 16px;
+        font-size: 11px;
+      }
+      .tk-preview-active-info {
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Custom 花字 & Image Slot Styles */
+      .tk-fancy-clip {
+        width: 100%;
+        height: 100%;
+        padding: 4px 10px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+      }
+      .tk-fancy-badge {
+        flex: 0 0 auto;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.55);
+        color: #f8fafc;
+      }
+      .tk-fancy-text {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .tk-fancy-clip.is-neon {
+        background: linear-gradient(135deg, #090d16, #1e1b4b);
+      }
+      .tk-fancy-clip.is-neon .tk-fancy-text {
+        color: #67e8f9;
+        text-shadow: 0 0 8px rgba(34, 211, 238, 0.85);
+      }
+      .tk-fancy-clip.is-variety {
+        background: linear-gradient(135deg, #be185d, #f59e0b);
+      }
+      .tk-fancy-clip.is-variety .tk-fancy-text {
+        color: #fef08a;
+        -webkit-text-stroke: 0.5px #450a0a;
+        text-shadow: 2px 2px 0 #881337;
+      }
+      .tk-fancy-clip.is-gradient {
+        background: linear-gradient(135deg, #312e81, #7c3aed);
+      }
+      .tk-fancy-clip.is-gradient .tk-fancy-text {
+        background: linear-gradient(90deg, #fde047, #f472b6, #60a5fa);
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      .tk-fancy-clip.is-subtitle {
+        background: linear-gradient(135deg, #1f2937, #374151);
+      }
+      .tk-fancy-clip.is-subtitle .tk-fancy-text {
+        color: #f8fafc;
+        font-weight: 600;
+      }
+      .tk-image-clip {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0f172a;
+      }
+      .tk-image-clip-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .tk-image-clip-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 4px 6px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.1), rgba(15, 23, 42, 0.78));
+      }
+      .tk-image-clip-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #f8fafc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tk-image-clip-badge {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: rgba(245, 158, 11, 0.9);
+        color: #0f172a;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="demo-header">
+        <div id="scenario-tabs" class="demo-tabs"></div>
+        <div class="demo-controls">
+          <button id="btn-theme" class="demo-btn" type="button">Theme: dark</button>
+          <button id="btn-grid-snap" class="demo-btn" type="button">Grid Snap: off</button>
+          <button id="btn-toggle-toolbar" class="demo-btn" type="button">Toolbar: on</button>
+        </div>
+      </div>
+
+      <div class="demo-top-stage">
+        <div id="preview-host"></div>
+        <div class="demo-top-right">
+          <div class="demo-materials" id="material-palette">
+            <span class="demo-materials-label">拖入真实素材到轨道：</span>
+          </div>
+
+          <div id="external-history-bar" class="demo-subpanel">
+            <span><strong>外部宿主控制栏（Headless Shell + External History）</strong></span>
+            <div class="demo-controls">
+              <button id="ext-undo" class="demo-btn" type="button">Host Undo</button>
+              <button id="ext-redo" class="demo-btn" type="button">Host Redo</button>
+              <button id="ext-split" class="demo-btn" type="button">Host Split</button>
+              <button id="ext-delete" class="demo-btn" type="button">Host Delete</button>
+              <span id="ext-history-count">Stack: 0 / 0</span>
+            </div>
+          </div>
+
+          <div id="otio-panel" class="demo-otio-panel"></div>
+
+          <div id="readout">
+            <span id="scenario-desc">initializing…</span>
+            <span id="state-readout">loading…</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="timeline"></div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

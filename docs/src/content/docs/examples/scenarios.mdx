@@ -1,0 +1,36 @@
+---
+title: 7 大交互场景演示
+description: 覆盖全媒体剪辑、播客波形、多机位视频胶片条、花字贴纸、128 片段虚拟化、无头外部历史栈与 OTIO 往返。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+文档站内所有交互演示均直接复用受 Chromium 端到端测试覆盖的真实场景定义（`demo/scenarios.ts` 与 `demo/mediaShowcase.ts`），**全场景默认接入交互式简易画板与 Mediabunny 实时音视频播放**（纯音频场景自动切换实时频谱与 PCM 声波画布，纯图文场景支持点阵舞台拖拽且同一页面仅允许一个实例同时发声）。
+
+## 1. 全媒体综合剪辑（Mediabunny 胶片 + 波形 + 花字 + 图片 + 外部拖入）
+
+<TimelinePlayground scenario="full-studio" height="380px" showMaterialPalette={true} showPreview={true} />
+
+## 2. 播客多轨音频波形 + 500ms 网格吸附
+
+<TimelinePlayground scenario="podcast-audio" height="350px" />
+
+## 3. 多机位视频胶片缩略图（Mediabunny 裁剪切片 + 缩放重绘）
+
+<TimelinePlayground scenario="video-filmstrip" height="290px" showPreview={true} />
+
+## 4. 花字预设 / 图片贴纸 / 空白区框选多选（跳过锁定轨）
+
+<TimelinePlayground scenario="fancy-text-graphics" height="320px" />
+
+## 5. 128 片段大数据量横向视口虚拟化
+
+<TimelinePlayground scenario="virtualized-stress" height="340px" />
+
+## 6. 无头外壳 + 外部全局撤销栈
+
+<TimelinePlayground scenario="headless-external-history" height="300px" />
+
+## 7. OpenTimelineIO 双向导入导出
+
+<TimelinePlayground scenario="otio-roundtrip" height="340px" />

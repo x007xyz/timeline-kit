@@ -1,0 +1,50 @@
+---
+title: 编辑策略与外部历史栈
+description: 通过 EditPolicies 定制编辑规则，并将撤销/重做无缝接入宿主全局历史栈或协同引擎。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+不同剪辑产品对轨道行为的约束差异很大。`timeline-kit` 将这些规则全部抽离为可运行时热更新的 `EditPolicies`：
+
+```ts
+export interface EditPolicies {
+  allowOverlap: boolean           // 是否允许同轨片段重叠（默认 false）
+  allowCrossTrackType: boolean    // 是否允许跨轨道类型放置（默认 false）
+  removeEmptyTracks: boolean      // 移空后是否自动清理空轨道（默认 true）
+  orderAudioToBottom: boolean     // 是否自动把 audio 轨道排序到底部（默认 true）
+  minClipDurationMs?: number      // 裁剪/分割最小时长（默认 1 帧）
+  canDrop?: (ctx: EditDropContext) => boolean // 自定义落轨校验钩子
+}
+```
+
+运行时可通过 `editor.setPolicies({ allowOverlap: true })` 动态切换，无需重建编辑器。
+
+## 接管全局撤销栈（External History）
+
+在完整视频编辑器中，画布位置调整、右侧属性面板修改参数与时间轴裁剪往往共享一条全局撤销栈。`timeline-kit` 支持 `history: 'external'` 模式与 `onBeforeCommand` 拦截钩子：
+
+1. 当 `history: 'external'` 时，组件内部不再维护独立快照栈；
+2. 任何编辑操作都会先经过 `onBeforeCommand(command, ctx)`；
+3. 宿主既可以记录 `ctx.store.getState().document` 到外部撤销栈，也可以返回 `false` 否决执行，或返回一个改写后的新 `TimelineCommand`；
+4. 宿主执行 Undo/Redo 后，通过 `editor.setDocument(prevDoc)` 和 `editor.setExternalHistoryState({ canUndo, canRedo })` 回流状态。
+
+```ts
+const editor = createTimelineEditor(el, {
+  document: doc,
+  history: 'external',
+  ui: { toolbar: false, sidebar: true, ruler: true },
+  onBeforeCommand(command, ctx) {
+    if (command.type.startsWith('clip:') || command.type === 'track:toggle-flag') {
+      hostUndoStack.push(ctx.store.getState().document)
+      hostRedoStack.length = 0
+    }
+  },
+})
+```
+
+## 无头外壳 + 外部历史栈演示
+
+该场景关闭了内置工具栏，顶部的 `Host Undo / Redo / Split / Delete` 栏完全由外部宿主控制，且通过 `onBeforeCommand` 捕获时间轴编辑事件：
+
+<TimelinePlayground scenario="headless-external-history" height="320px" />

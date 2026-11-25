@@ -1,0 +1,94 @@
+---
+title: 编写自定义插件
+description: 通过完整示例学会扩展自定义命令、吸附源（如节拍点吸附）以及手势交互插件。
+---
+
+下面通过一个实战例子，演示如何编写一个 **节拍点吸附 + 一键对齐到播放头命令** 插件。
+
+## 示例：节拍点吸附 + 对齐命令插件
+
+```ts
+import type { TimelinePlugin } from 'timeline-kit'
+import { msToPx } from 'timeline-kit'
+
+export function createBeatMarkerPlugin(beatTimesMs: number[]): TimelinePlugin {
+  return {
+    name: 'custom:beat-markers',
+
+    // 1. 注册自定义命令：将当前选中片段的起点对齐到播放头
+    commands: {
+      'clip:snap-to-playhead': {
+        canExecute(ctx) {
+          return ctx.store.getState().selection.clipId !== null
+        },
+        execute(ctx) {
+          const state = ctx.store.getState()
+          const { trackIndex, clipIndex } = state.selection
+          const clip = state.document.tracks[trackIndex]?.clips[clipIndex]
+          if (!clip) {
+            return false
+          }
+          const fps = state.document.fps || 24
+          const playheadMs = Math.round((state.currentFrame / fps) * 1000)
+          const durationMs = clip.endMs - clip.startMs
+          return ctx.commands.execute('clip:move', {
+            sourceTrackIndex: trackIndex,
+            sourceClipIndex: clipIndex,
+            targetTrackIndex: trackIndex,
+            isNewTrack: false,
+            startMs: playheadMs,
+            endMs: playheadMs + durationMs,
+          })
+        },
+      },
+    },
+
+    // 2. 绑定快捷键
+    keymap: {
+      'Mod+Shift+A': 'clip:snap-to-playhead',
+    },
+
+    // 3. 注入自定义吸附点（音乐节拍点）
+    snapProviders: [
+      {
+        id: 'beat-points',
+        getSnapPoints(ctx) {
+          return beatTimesMs.map(timeMs => ({
+            timeMs,
+            x: msToPx(timeMs, ctx.layout.pixelsPerSecond),
+            source: 'beat',
+            kind: 'custom',
+          }))
+        },
+      },
+    ],
+
+    // 4. 可选生命周期钩子（返回的函数会在 removePlugin 或 destroy 时自动执行）
+    setup(ctx) {
+      const unsub = ctx.store.subscribeSelector(
+        s => s.selection.clipId,
+        id => console.log('当前选中变更:', id),
+      )
+      return () => unsub()
+    },
+  }
+}
+```
+
+## 挂载与热卸载
+
+```ts
+const dispose = editor.use(createBeatMarkerPlugin([1000, 2500, 4000, 5500]))
+
+// 随时执行自定义命令
+editor.exec('clip:snap-to-playhead')
+
+// 需要卸载时调用返回的清理函数或 removePlugin
+dispose()
+```
+
+## 编写交互手势时的注意事项
+
+1. 在 `onPointerDown` 中返回 `InteractionSession` 对象即代表独占当前手势；返回 `null` 或 `undefined` 则交由低优先级插件继续处理。
+2. 任何临时预览都应通过 `ctx.renderer.setClipPreview()` 和 `ctx.renderer.setOverlay()` 完成，**不要直接写 `document.querySelector()` 操作 DOM**，以保证多实例隔离与可测试性。
+3. 务必实现 `onCancel()` 清理临时预览状态，这样用户在拖动途中使用 `Escape` 键即可无损还原。

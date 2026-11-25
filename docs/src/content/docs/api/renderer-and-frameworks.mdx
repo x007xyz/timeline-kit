@@ -1,0 +1,496 @@
+---
+title: Renderer 与多框架桥接
+description: DOM+Canvas 混合渲染器、Slot 生命周期、SlotBridge 与 React / Vue 适配层 API 参考。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note">
+本页由 `scripts/gen-api-docs.mjs` 从以下源码入口自动提取生成：`src/renderer/index.ts`、`src/frameworks/slotBridge.ts`、`adapters/react/index.ts`、`adapters/vue/index.ts`。
+</Aside>
+
+## 类 (Classes)
+
+### `class ToolbarRenderer`
+
+```ts
+class ToolbarRenderer {
+  constructor(host: HTMLElement);
+  render(state: TimelineState, customTools: readonly ToolbarConfig[] | boolean | undefined): void;
+  destroy(): void;
+}
+```
+
+### `class SidebarRenderer`
+
+```ts
+class SidebarRenderer {
+  constructor(sidebarEl: HTMLElement, headerEl: HTMLElement, bodyEl: HTMLElement);
+  render(layout: TimelineLayoutSnapshot, trackConfigs: TrackConfigMap, sidebarConfig: boolean | SidebarConfig | undefined, showRuler: boolean): void;
+  syncScroll(scrollTop: number): void;
+  syncHeights(trackRowElements: readonly HTMLElement[]): void;
+  destroy(): void;
+}
+```
+
+### `class DomTimelineRenderer`
+
+```ts
+class DomTimelineRenderer {
+  constructor(container: HTMLElement, options: DomRendererOptions = {});
+  getRootElement(): HTMLElement;
+  getMainScrollerElement(): HTMLElement;
+  setTrackConfigs(trackConfigs: TrackConfigMap): void;
+  setUIConfig(uiConfig: UIConfig): void;
+  setMediaProvider(provider: MediaProvider | undefined): void;
+  getLayout(): TimelineLayoutSnapshot;
+  getViewportMetrics(): ViewportMetrics;
+  setScrollLeft(scrollLeft: number): void;
+  lockUserSelect(): void;
+  restoreUserSelect(): void;
+  focusContainer(): void;
+  setOverlay(patch: Partial<OverlayState>): void;
+  clearOverlay(): void;
+  setClipPreview(clipId: string, override: ClipPreviewOverride | null): void;
+  clearAllClipPreviews(): void;
+  render(state: TimelineState, dirty?: ReadonlySet<RenderChannel>): void;
+  handleScroll(): void;
+  hitTestClientPoint(clientX: number, clientY: number, target: EventTarget | null, doc: TimelineDocument): TimelineHitTarget;
+  destroy(): void;
+}
+```
+
+## 函数 (Functions)
+
+### `ensureTimelineStyles()`
+
+```ts
+function ensureTimelineStyles(enabled?: boolean): void
+```
+
+### `drawTimeRuler()`
+
+```ts
+function drawTimeRuler(context: CanvasRenderingContext2D, options: RulerDrawOptions): void
+```
+
+### `isSlotRendererObject()`
+
+```ts
+function isSlotRendererObject<TCtx>(slot: SlotRenderer<TCtx>): slot is SlotRendererObject<TCtx>
+```
+
+### `normalizeSlotRenderer()`
+
+```ts
+function normalizeSlotRenderer<TCtx>(slot: SlotRenderer<TCtx>): SlotRendererObject<TCtx>
+```
+
+### `createSlotBridge()`
+
+```ts
+function createSlotBridge<TCtx>(getKey: (ctx: TCtx) => string): SlotBridge<TCtx>
+```
+
+### `useTimelineSelector()` (React)
+
+```ts
+function useTimelineSelector<TSelected>(editor: VanillaTimelineEditor | null | undefined, selector: (state: TimelineState) => TSelected): TSelected | undefined
+```
+
+### `useTimelineSelector()` (Vue)
+
+```ts
+function useTimelineSelector<TSelected>(editorRef: Ref<VanillaTimelineEditor | null>, selector: (state: TimelineState) => TSelected): ShallowRef<TSelected | undefined>
+```
+
+## 类型与接口 (Types & Interfaces)
+
+### `interface RulerDrawOptions`
+
+```ts
+interface RulerDrawOptions {
+  startPx: number
+  fps: number
+  scale: number
+  totalFrames: number
+  width: number
+  height: number
+  ratio: number
+  palette: {
+    bgColor: string
+    longColor: string
+    shortColor: string
+    textColor: string
+    subTextColor: string
+    focusColor: string
+  }
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `startPx` | `number` |
+| `fps` | `number` |
+| `scale` | `number` |
+| `totalFrames` | `number` |
+| `width` | `number` |
+| `height` | `number` |
+| `ratio` | `number` |
+| `palette` | `{ bgColor: string longColor: string shortColor: string textColor: string subTextColor: string focusColor: string }` |
+
+### `interface DomRendererOptions`
+
+```ts
+interface DomRendererOptions {
+  trackConfigs?: TrackConfigMap
+  ui?: UIConfig
+  theme?: ThemeMode
+  injectStyles?: boolean
+  mediaProvider?: MediaProvider
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackConfigs?` | `TrackConfigMap` |
+| `ui?` | `UIConfig` |
+| `theme?` | `ThemeMode` |
+| `injectStyles?` | `boolean` |
+| `mediaProvider?` | `MediaProvider` |
+
+### `interface SlotHandle`
+
+```ts
+interface SlotHandle<TCtx> {
+  update?: (ctx: TCtx) => void
+  destroy?: () => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `update?` | `(ctx: TCtx) => void` |
+| `destroy?` | `() => void` |
+
+### `interface SlotRendererObject`
+
+```ts
+interface SlotRendererObject<TCtx> {
+  mount: (host: HTMLElement, ctx: TCtx) => SlotHandle<TCtx> | void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `mount` | `(host: HTMLElement, ctx: TCtx) => SlotHandle<TCtx> \| void` |
+
+### `type SlotRendererFn`
+
+```ts
+type SlotRendererFn<TCtx> = (ctx: TCtx) => HTMLElement | string | null | undefined
+```
+
+### `type SlotRenderer`
+
+```ts
+type SlotRenderer<TCtx> = SlotRendererObject<TCtx> | SlotRendererFn<TCtx>
+```
+
+### `interface ClipRenderContext`
+
+```ts
+interface ClipRenderContext {
+  clip: TimelineClip
+  track: TimelineTrack
+  trackIndex: number
+  clipIndex: number
+  isSelected: boolean
+  renderHints: TimelineRenderHints
+  clipWidthPx: number
+  isVisible: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clip` | `TimelineClip` |
+| `track` | `TimelineTrack` |
+| `trackIndex` | `number` |
+| `clipIndex` | `number` |
+| `isSelected` | `boolean` |
+| `renderHints` | `TimelineRenderHints` |
+| `clipWidthPx` | `number` |
+| `isVisible` | `boolean` |
+
+### `interface TrackHeaderContext`
+
+```ts
+interface TrackHeaderContext {
+  track: TimelineTrack
+  trackIndex: number
+  height: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `track` | `TimelineTrack` |
+| `trackIndex` | `number` |
+| `height` | `number` |
+
+### `interface TrackConfig`
+
+```ts
+interface TrackConfig {
+  type: string
+  name?: string
+  height?: number
+  icon?: SlotRenderer<TrackHeaderContext>
+  clip?: SlotRenderer<ClipRenderContext>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `type` | `string` |
+| `name?` | `string` |
+| `height?` | `number` |
+| `icon?` | `SlotRenderer<TrackHeaderContext>` |
+| `clip?` | `SlotRenderer<ClipRenderContext>` |
+
+### `type TrackConfigMap`
+
+```ts
+type TrackConfigMap = Record<string, TrackConfig>
+```
+
+### `interface ToolbarContext`
+
+```ts
+interface ToolbarContext {
+  snapshot: TimelineState
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `snapshot` | `TimelineState` |
+
+### `interface ToolbarConfig`
+
+```ts
+interface ToolbarConfig {
+  id: string
+  sort: number
+  position: 'left' | 'right'
+  label?: string
+  title?: string
+  command?: string
+  isDisabled?: (ctx: ToolbarContext) => boolean
+  isActive?: (ctx: ToolbarContext) => boolean
+  render?: (ctx: ToolbarContext) => HTMLElement | string | null
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `sort` | `number` |
+| `position` | `'left' \| 'right'` |
+| `label?` | `string` |
+| `title?` | `string` |
+| `command?` | `string` |
+| `isDisabled?` | `(ctx: ToolbarContext) => boolean` |
+| `isActive?` | `(ctx: ToolbarContext) => boolean` |
+| `render?` | `(ctx: ToolbarContext) => HTMLElement \| string \| null` |
+
+### `interface SidebarConfig`
+
+```ts
+interface SidebarConfig {
+  width?: number
+  showTrackActions?: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `width?` | `number` |
+| `showTrackActions?` | `boolean` |
+
+### `interface UIConfig`
+
+```ts
+interface UIConfig {
+  toolbar?: boolean | ToolbarConfig[]
+  sidebar?: boolean | SidebarConfig
+  ruler?: boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `toolbar?` | `boolean \| ToolbarConfig[]` |
+| `sidebar?` | `boolean \| SidebarConfig` |
+| `ruler?` | `boolean` |
+
+### `interface MediaProvider`
+
+```ts
+interface MediaProvider {
+  renderFilmstrip?: (canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) | void
+  renderWaveform?: (canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) | void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `renderFilmstrip?` | `(canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) \| void` |
+| `renderWaveform?` | `(canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) \| void` |
+
+### `interface SlotPortalEntry`
+
+```ts
+interface SlotPortalEntry<TCtx> {
+  key: string
+  host: HTMLElement
+  context: TCtx
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `key` | `string` |
+| `host` | `HTMLElement` |
+| `context` | `TCtx` |
+
+### `interface SlotBridge`
+
+```ts
+interface SlotBridge<TCtx> {
+  slot: SlotRendererObject<TCtx>
+  getEntries: () => readonly SlotPortalEntry<TCtx>[]
+  subscribe: (listener: () => void) => () => void
+  clear: () => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `slot` | `SlotRendererObject<TCtx>` |
+| `getEntries` | `() => readonly SlotPortalEntry<TCtx>[]` |
+| `subscribe` | `(listener: () => void) => () => void` |
+| `clear` | `() => void` |
+
+### `interface TimelineEditorProps` (React)
+
+```ts
+interface TimelineEditorProps {
+  document?: TimelineDocument
+  timeline?: TimelineDocument | OtioTimeline
+  fps?: number
+  currentFrame?: number
+  trackScale?: number
+  isMagnetEnabled?: boolean
+  trackConfigs?: TrackConfigMap
+  toolsConfigs?: ToolbarConfig[]
+  ui?: UIConfig
+  theme?: ThemeMode
+  injectStyles?: boolean
+  policies?: Partial<EditPolicies>
+  history?: HistoryMode
+  plugins?: TimelinePlugin[]
+  disableDefaultPlugins?: boolean
+  shortcuts?: boolean
+  keymap?: Record<string, KeyBinding | null>
+  mediaProvider?: MediaProvider
+  renderHints?: Partial<TimelineRenderHints>
+  className?: string
+  style?: CSSProperties
+  renderClip?: (ctx: ClipRenderContext) => ReactNode
+  renderTrackIcon?: (ctx: TrackHeaderContext) => ReactNode
+  onBeforeCommand?: BeforeCommandHook
+  onDocumentChange?: (snapshot: TimelineEditorSnapshot) => void
+  onTimelineChange?: (snapshot: TimelineEditorSnapshot) => void
+  onSelectionChange?: (snapshot: TimelineEditorSnapshot) => void
+  onCurrentFrameChange?: (snapshot: TimelineEditorSnapshot) => void
+  onTrackScaleChange?: (snapshot: TimelineEditorSnapshot) => void
+  onMagnetChange?: (snapshot: TimelineEditorSnapshot) => void
+  onCommand?: (command: TimelineCommand, snapshot: TimelineEditorSnapshot) => void
+  onReady?: (editor: VanillaTimelineEditor) => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `document?` | `TimelineDocument` |
+| `timeline?` | `TimelineDocument \| OtioTimeline` |
+| `fps?` | `number` |
+| `currentFrame?` | `number` |
+| `trackScale?` | `number` |
+| `isMagnetEnabled?` | `boolean` |
+| `trackConfigs?` | `TrackConfigMap` |
+| `toolsConfigs?` | `ToolbarConfig[]` |
+| `ui?` | `UIConfig` |
+| `theme?` | `ThemeMode` |
+| `injectStyles?` | `boolean` |
+| `policies?` | `Partial<EditPolicies>` |
+| `history?` | `HistoryMode` |
+| `plugins?` | `TimelinePlugin[]` |
+| `disableDefaultPlugins?` | `boolean` |
+| `shortcuts?` | `boolean` |
+| `keymap?` | `Record<string, KeyBinding \| null>` |
+| `mediaProvider?` | `MediaProvider` |
+| `renderHints?` | `Partial<TimelineRenderHints>` |
+| `className?` | `string` |
+| `style?` | `CSSProperties` |
+| `renderClip?` | `(ctx: ClipRenderContext) => ReactNode` |
+| `renderTrackIcon?` | `(ctx: TrackHeaderContext) => ReactNode` |
+| `onBeforeCommand?` | `BeforeCommandHook` |
+| `onDocumentChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onTimelineChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onSelectionChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onCurrentFrameChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onTrackScaleChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onMagnetChange?` | `(snapshot: TimelineEditorSnapshot) => void` |
+| `onCommand?` | `(command: TimelineCommand, snapshot: TimelineEditorSnapshot) => void` |
+| `onReady?` | `(editor: VanillaTimelineEditor) => void` |
+
+### `interface TimelineEditorRef` (React)
+
+```ts
+interface TimelineEditorRef {
+  getEditor: () => VanillaTimelineEditor | null
+  exec: (command: string, payload?: unknown) => boolean
+  fitToView: () => number | null
+  scrollToTime: (ms: number) => void
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `getEditor` | `() => VanillaTimelineEditor \| null` |
+| `exec` | `(command: string, payload?: unknown) => boolean` |
+| `fitToView` | `() => number \| null` |
+| `scrollToTime` | `(ms: number) => void` |
+
+## 常量 (Constants)
+
+### `DEFAULT_TOOLS`
+
+```ts
+const DEFAULT_TOOLS: Array<ToolbarConfig>
+```
+
+### `TimelineEditor` (React)
+
+```ts
+const TimelineEditor: any
+```
+
+### `TimelineEditor` (Vue)
+
+```ts
+const TimelineEditor: any
+```

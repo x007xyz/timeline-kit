@@ -1,0 +1,54 @@
+---
+title: 交互管线与插件架构
+description: 理解 HitTest、InteractionManager 手势独占会话、CommandBus 与 TimelinePlugin 协议。
+---
+
+`timeline-kit` 将核心控制器与具体交互手势彻底解耦。无论是默认的拖拽移动、边缘裁剪、播放头拖动，还是外部扩展的框选多选、素材拖入，均以标准的 `TimelinePlugin` 形式注册到 `InteractionManager`。
+
+## 交互输入管线
+
+```text
+原始浏览器输入 (Pointer / Wheel / Keyboard / DragDrop)
+   │
+   ▼  1. HitTest & 坐标翻译层
+      输出语义命中结果 TimelineHitTarget:
+      { zone: 'clip-body' | 'trim-start' | 'trim-end' | 'ruler' | 'playhead' | 'track-empty' | ... ,
+        timeMs, frame, x, y, trackIndex, clipIndex, clipId }
+   │
+   ▼  2. InteractionManager（优先级仲裁 + 独占手势会话）
+      按 priority 降序询问插件是否接管当前手势（返回 InteractionSession）
+      会话生命周期: onMove -> onEnd / onCancel (按 Esc 自动取消并清理预览)
+   │
+   ▼  3. CommandBus（统一命令入口 + Before/After 中间件）
+      插件提交语义命令 (如 'clip:move', 'clip:trim', 'clip:insert') -> 更新 TimelineStore
+   │
+   ▼  4. Dirty-Channel Renderer + Overlay Layer
+      仅重绘受影响的通道，并更新辅助线、放置预览框或框选矩形等 Overlay
+```
+
+## `TimelinePlugin` 契约
+
+```ts
+export interface TimelinePlugin {
+  name: string
+  commands?: Record<string, CommandSpec<any>>     // 注册新命令
+  keymap?: Record<string, KeyBinding | null>     // 绑定或禁用快捷键
+  interactions?: InteractionHandler[]            // 指针 / 滚轮 / 拖放手势处理器
+  snapProviders?: SnapProvider[]                 // 注册吸附参考点源
+  setup?: (ctx: PluginContext) => (() => void) | void // 生命周期初始化与清理
+}
+```
+
+## 优先级分层设计
+
+默认内置插件按照直观的手势优先级排列，避免触发冲突：
+
+| 插件 | `priority` | 职责 |
+| --- | --- | --- |
+| `builtin:playhead` | `100` | 播放头手柄拖动、标尺点击/擦洗、左右方向键逐帧步进 |
+| `builtin:clip-trim` | `80` | 左右裁剪手柄拖动及 `Escape` 取消 |
+| `builtin:clip-drag` | `70` | 片段拖拽移动、主轨磁吸预览、辅助线与跨轨放置 |
+| `plugin:external-drop` | `60` | 外部素材库 HTML5 `dragover` 预览与 `drop` 插入 |
+| `builtin:wheel` | `50` | `Shift + 滚轮` 横向滚动、`Ctrl/Cmd + 滚轮` 指针锚点缩放 |
+| `plugin:marquee-select` | `30` | 空白处拉框多选片段 |
+| `builtin:selection` | `20` | 片段单选、`Ctrl/Cmd + 点击` 多选、空白区点击定位并清空选区 |

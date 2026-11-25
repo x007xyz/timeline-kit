@@ -1,0 +1,78 @@
+---
+title: 原生 JS / TypeScript 集成
+description: 使用 createTimelineEditor、事件订阅、选择器监听与运行时热更新配置。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+`TimelineEditor` 继承自标准 `EventTarget`，同时支持 **CustomEvent 监听** 与更精细的 **`subscribeSelector` 切片订阅**。
+
+## 创建与销毁
+
+```ts
+import { createTimelineEditor, demoDocument } from 'timeline-kit'
+
+const editor = createTimelineEditor(document.getElementById('timeline')!, {
+  document: demoDocument,
+  fps: 24,
+  currentFrame: 0,
+  trackScale: 50,
+  theme: 'dark',
+  trackConfigs: {
+    video: { type: 'video', height: 68 },
+    audio: { type: 'audio', height: 56 },
+    image: { type: 'image', height: 64 },
+    text: { type: 'text', height: 52 },
+  },
+})
+
+// 页面卸载时释放事件、ResizeObserver 与自定义插槽实例
+editor.destroy()
+```
+
+## 状态订阅与事件
+
+### 1. 高性能切片订阅（推荐用于工具栏 / 状态读数）
+
+```ts
+const unsubscribe = editor.subscribeSelector(
+  state => ({
+    frame: state.currentFrame,
+    canUndo: state.canUndo,
+    canRedo: state.canRedo,
+  }),
+  (next) => {
+    console.log('仅在关注字段变化时触发', next)
+  },
+)
+```
+
+### 2. 标准 DOM CustomEvent
+
+```ts
+editor.addEventListener('documentchange', (e) => {
+  const snapshot = (e as CustomEvent).detail
+  console.log('文档更新:', snapshot.document)
+})
+
+editor.addEventListener('selectionchange', (e) => {
+  const { selection } = (e as CustomEvent).detail
+  console.log('选中片段:', selection.clipIds)
+})
+```
+
+支持的标准事件包括：`documentchange`、`timelinechange`（兼容别名）、`selectionchange`、`currentframechange`、`trackscalechange`、`magnetchange`、`command`。
+
+## 运行时动态更新
+
+无需销毁重建实例，即可随时热更新配置：
+
+- `editor.setDocument(nextDoc)` / `editor.setTimeline(otioOrDoc)`
+- `editor.setCurrentFrame(frame)` / `editor.setTrackScale(scale)`
+- `editor.fitToView()` / `editor.scrollToTime(ms)`
+- `editor.setTheme('light' | 'dark' | 'auto')`
+- `editor.setUI({ toolbar: false, sidebar: true, ruler: true })`
+- `editor.setPolicies({ allowOverlap: true })`
+- `editor.setTrackConfigs(nextConfigs)` / `editor.setMediaProvider(nextProvider)`
+
+<TimelinePlayground scenario="full-studio" height="360px" />

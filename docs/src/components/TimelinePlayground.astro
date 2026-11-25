@@ -1,0 +1,346 @@
+---
+interface Props {
+  scenario?:
+    | 'full-studio'
+    | 'podcast-audio'
+    | 'video-filmstrip'
+    | 'fancy-text-graphics'
+    | 'virtualized-stress'
+    | 'headless-external-history'
+    | 'otio-roundtrip'
+  height?: string
+  showMaterialPalette?: boolean
+  showControls?: boolean
+  showPreview?: boolean
+  studioMode?: boolean
+  title?: string
+}
+
+const {
+  scenario = 'full-studio',
+  height = '380px',
+  showMaterialPalette = false,
+  showControls = true,
+  showPreview = true,
+  studioMode = false,
+  title,
+} = Astro.props
+const effectivePreview = showPreview || studioMode
+---
+
+<div
+  class={`tk-doc-playground not-content${studioMode ? ' is-studio' : ''}`}
+  data-tk-playground
+  data-scenario={scenario}
+  data-show-palette={showMaterialPalette ? 'true' : 'false'}
+  data-show-preview={effectivePreview ? 'true' : 'false'}
+  data-studio-mode={studioMode ? 'true' : 'false'}
+>
+  <div class="tk-doc-playground-header">
+    <span class="tk-doc-playground-title" data-tk-title>{title ?? scenario}</span>
+    {showControls && (
+      <div class="tk-doc-playground-controls">
+        <button type="button" class="tk-doc-btn" data-tk-action="grid">Grid Snap: off</button>
+        <button type="button" class="tk-doc-btn" data-tk-action="fit">适应窗口</button>
+        <button type="button" class="tk-doc-btn" data-tk-action="reset">重置示例</button>
+      </div>
+    )}
+  </div>
+
+  {effectivePreview && (
+    <div class="tk-doc-preview-host" data-tk-preview></div>
+  )}
+
+  {showMaterialPalette && (
+    <div class="tk-doc-palette" data-tk-palette>
+      <span>拖入真实素材到轨道：</span>
+    </div>
+  )}
+
+  <div class="tk-doc-ext-bar" data-tk-ext-bar>
+    <span>外部历史栈控制栏</span>
+    <div class="tk-doc-playground-controls">
+      <button type="button" class="tk-doc-btn" data-tk-ext="undo">Host Undo</button>
+      <button type="button" class="tk-doc-btn" data-tk-ext="redo">Host Redo</button>
+      <button type="button" class="tk-doc-btn" data-tk-ext="split">Host Split</button>
+      <button type="button" class="tk-doc-btn" data-tk-ext="delete">Host Delete</button>
+    </div>
+  </div>
+
+  <div class="tk-doc-otio-box" data-tk-otio-box></div>
+
+  <div class="tk-doc-canvas-host" data-tk-host style={`height: ${height};`}></div>
+
+  <div class="tk-doc-readout" data-tk-readout>initializing...</div>
+</div>
+
+<script>
+  import {
+    cloneDocument,
+    createExternalDropPlugin,
+    createGridSnapProvider,
+    createMarqueeSelectPlugin,
+    createTimelineEditor,
+    type ThemeMode,
+    type TimelineDocument,
+    type TimelinePlugin,
+  } from 'timeline-kit'
+  import {
+    createFancyTextSlotRenderer,
+    createImageSlotRenderer,
+    createShowcaseMediaProvider,
+  } from '@demo/mediaShowcase'
+  import { createTimelinePreviewPlayer, type TimelinePreviewPlayerHandle } from '@demo/previewPlayer'
+  import {
+    MATERIAL_PALETTE,
+    SCENARIOS,
+    countDocumentClips,
+    createScenarioTrackConfigs,
+    type ScenarioId,
+  } from '@demo/scenarios'
+
+  function getStarlightTheme(): ThemeMode {
+    const attr = document.documentElement.dataset.theme
+    return attr === 'light' ? 'light' : 'dark'
+  }
+
+  function setupPlayground(root: HTMLElement) {
+    if (root.dataset.tkInitialized === 'true') {
+      return
+    }
+    root.dataset.tkInitialized = 'true'
+
+    const scenarioId = (root.dataset.scenario || 'full-studio') as ScenarioId
+    const scenario = SCENARIOS[scenarioId] ?? SCENARIOS['full-studio']
+    const hostEl = root.querySelector<HTMLElement>('[data-tk-host]')
+    const previewEl = root.querySelector<HTMLElement>('[data-tk-preview]')
+    const titleEl = root.querySelector<HTMLElement>('[data-tk-title]')
+    const readoutEl = root.querySelector<HTMLElement>('[data-tk-readout]')
+    const paletteEl = root.querySelector<HTMLElement>('[data-tk-palette]')
+    const extBarEl = root.querySelector<HTMLElement>('[data-tk-ext-bar]')
+    const otioBoxEl = root.querySelector<HTMLElement>('[data-tk-otio-box]')
+    const gridBtn = root.querySelector<HTMLButtonElement>('[data-tk-action="grid"]')
+    const fitBtn = root.querySelector<HTMLButtonElement>('[data-tk-action="fit"]')
+    const resetBtn = root.querySelector<HTMLButtonElement>('[data-tk-action="reset"]')
+
+    if (!hostEl) {
+      return
+    }
+
+    if (titleEl && titleEl.textContent === scenarioId) {
+      titleEl.textContent = `${scenario.title} — ${scenario.description}`
+    }
+
+    if (paletteEl && root.dataset.showPalette === 'true') {
+      for (const item of MATERIAL_PALETTE) {
+        const chip = document.createElement('div')
+        chip.className = 'tk-doc-chip'
+        chip.draggable = true
+        const badge = document.createElement('span')
+        badge.className = 'tk-doc-chip-badge'
+        badge.textContent = item.badge
+        const text = document.createElement('span')
+        text.textContent = item.name
+        chip.append(badge, text)
+        chip.addEventListener('dragstart', (e) => {
+          e.dataTransfer?.setData('application/x-timeline-kit-material', JSON.stringify(item))
+        })
+        paletteEl.appendChild(chip)
+      }
+    }
+
+    const mediaProvider = createShowcaseMediaProvider()
+    const trackConfigs = createScenarioTrackConfigs(
+      createFancyTextSlotRenderer(),
+      createImageSlotRenderer(),
+    )
+
+    let gridSnapEnabled = scenario.enableGridSnap === true
+    let externalPast: TimelineDocument[] = []
+    let externalFuture: TimelineDocument[] = []
+    let applyingExternal = false
+
+    const syncGridBtn = () => {
+      if (!gridBtn)
+        return
+      gridBtn.textContent = `Grid Snap: ${gridSnapEnabled ? 'on' : 'off'}`
+      gridBtn.classList.toggle('is-active', gridSnapEnabled)
+    }
+    syncGridBtn()
+
+    let editor: ReturnType<typeof createTimelineEditor> | null = null
+    let previewPlayer: TimelinePreviewPlayerHandle | null = null
+
+    const mount = () => {
+      previewPlayer?.destroy()
+      previewPlayer = null
+      editor?.destroy()
+      externalPast = []
+      externalFuture = []
+
+      const plugins: TimelinePlugin[] = [
+        createExternalDropPlugin({
+          resolveItem(event) {
+            const raw = event.dataTransfer?.getData('application/x-timeline-kit-material')
+            if (!raw)
+              return null
+            try {
+              return JSON.parse(raw)
+            }
+            catch {
+              return null
+            }
+          },
+        }),
+        {
+          name: 'docs:grid-snap',
+          snapProviders: [
+            createGridSnapProvider({
+              stepMs: scenario.gridStepMs ?? 500,
+              enabled: () => gridSnapEnabled,
+            }),
+          ],
+        },
+      ]
+
+      if (scenario.enableMarquee !== false) {
+        plugins.push(createMarqueeSelectPlugin())
+      }
+
+      editor = createTimelineEditor(hostEl, {
+        document: scenario.document ? cloneDocument(scenario.document) : undefined,
+        timeline: scenario.otioTimeline,
+        trackScale: scenario.trackScale,
+        isMagnetEnabled: scenario.isMagnetEnabled,
+        trackConfigs,
+        mediaProvider,
+        theme: getStarlightTheme(),
+        ui: scenario.ui,
+        history: scenario.history ?? 'internal',
+        policies: scenario.policies,
+        plugins,
+        onBeforeCommand(command, ctx) {
+          if (scenario.history === 'external' && !applyingExternal) {
+            const mutating = [
+              'clip:move',
+              'clip:magnet-move',
+              'clip:trim',
+              'clip:split',
+              'clip:delete',
+              'clip:insert',
+              'track:toggle-flag',
+            ].includes(command.type)
+            if (mutating) {
+              externalPast.push(cloneDocument(ctx.store.getState().document))
+              externalFuture = []
+            }
+          }
+        },
+      })
+
+      if (previewEl) {
+        previewPlayer = createTimelinePreviewPlayer(previewEl, editor, {
+          enableGlobalSpaceShortcut: root.dataset.studioMode === 'true',
+        })
+      }
+
+      const refreshPanels = () => {
+        if (!editor)
+          return
+        const state = editor.getState()
+        const fps = state.document.fps || 24
+        const mountedDom = hostEl.querySelectorAll('.tk-track-clip').length
+        const total = countDocumentClips(state.document)
+
+        if (readoutEl) {
+          readoutEl.textContent = [
+            `frame ${state.currentFrame} (${(state.currentFrame / fps).toFixed(2)}s)`,
+            `scale ${state.trackScale}`,
+            `selected ${state.selection.clipIds.length}`,
+            `DOM ${mountedDom}/${total}`,
+            `magnet ${state.isMagnetEnabled ? 'on' : 'off'}`,
+          ].join(' · ')
+        }
+
+        if (extBarEl) {
+          extBarEl.classList.toggle('is-visible', scenario.history === 'external')
+          editor.setExternalHistoryState({
+            canUndo: externalPast.length > 0,
+            canRedo: externalFuture.length > 0,
+          })
+        }
+
+        if (otioBoxEl) {
+          const isOtio = scenarioId === 'otio-roundtrip'
+          otioBoxEl.classList.toggle('is-visible', isOtio)
+          if (isOtio) {
+            otioBoxEl.textContent = JSON.stringify(editor.getOtioTimeline(), null, 2)
+          }
+        }
+      }
+
+      editor.subscribe(refreshPanels)
+      refreshPanels()
+    }
+
+    mount()
+
+    gridBtn?.addEventListener('click', () => {
+      gridSnapEnabled = !gridSnapEnabled
+      syncGridBtn()
+    })
+
+    fitBtn?.addEventListener('click', () => {
+      editor?.fitToView()
+    })
+
+    resetBtn?.addEventListener('click', () => {
+      gridSnapEnabled = scenario.enableGridSnap === true
+      syncGridBtn()
+      mount()
+    })
+
+    root.querySelector('[data-tk-ext="undo"]')?.addEventListener('click', () => {
+      if (!editor || externalPast.length === 0)
+        return
+      const prev = externalPast.pop()!
+      externalFuture.push(cloneDocument(editor.getDocument()))
+      applyingExternal = true
+      editor.setDocument(prev)
+      applyingExternal = false
+    })
+
+    root.querySelector('[data-tk-ext="redo"]')?.addEventListener('click', () => {
+      if (!editor || externalFuture.length === 0)
+        return
+      const next = externalFuture.pop()!
+      externalPast.push(cloneDocument(editor.getDocument()))
+      applyingExternal = true
+      editor.setDocument(next)
+      applyingExternal = false
+    })
+
+    root.querySelector('[data-tk-ext="split"]')?.addEventListener('click', () => {
+      editor?.exec('clip:split')
+    })
+
+    root.querySelector('[data-tk-ext="delete"]')?.addEventListener('click', () => {
+      editor?.exec('clip:delete')
+    })
+
+    const observer = new MutationObserver(() => {
+      editor?.setTheme(getStarlightTheme())
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
+  }
+
+  function initAllPlaygrounds() {
+    document.querySelectorAll<HTMLElement>('[data-tk-playground]').forEach(setupPlayground)
+  }
+
+  initAllPlaygrounds()
+  document.addEventListener('astro:page-load', initAllPlaygrounds)
+</script>

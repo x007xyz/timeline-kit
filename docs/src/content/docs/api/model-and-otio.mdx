@@ -1,0 +1,310 @@
+---
+title: Model 与 OTIO 适配器
+description: TimelineDocument 数据结构、纯编辑操作函数以及双向 OTIO 转换器 API 参考。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note">
+本页由 `scripts/gen-api-docs.mjs` 从以下源码入口自动提取生成：`src/model/index.ts`、`src/adapters/otio.ts`、`src/utils/trimOffset.ts`。
+</Aside>
+
+## 函数 (Functions)
+
+### `cloneClip()`
+
+```ts
+function cloneClip<TMeta = Record<string, unknown>>(clip: TimelineClip<TMeta>): TimelineClip<TMeta>
+```
+
+### `cloneTrack()`
+
+```ts
+function cloneTrack<TTrackMeta = Record<string, unknown>, TClipMeta = Record<string, unknown>>(track: TimelineTrack<TTrackMeta, TClipMeta>): TimelineTrack<TTrackMeta, TClipMeta>
+```
+
+### `cloneDocument()`
+
+```ts
+function cloneDocument<TTrackMeta = Record<string, unknown>, TClipMeta = Record<string, unknown>>(doc: TimelineDocument<TTrackMeta, TClipMeta>): TimelineDocument<TTrackMeta, TClipMeta>
+```
+
+### `getDocumentDurationMs()`
+
+```ts
+function getDocumentDurationMs(doc: TimelineDocument): number
+```
+
+### `findClipLocation()`
+
+```ts
+function findClipLocation(doc: TimelineDocument, clipId: string | null | undefined): { trackIndex: number; clipIndex: number; track: TimelineTrack; clip: TimelineClip; } | null
+```
+
+### `resolveSelection()`
+
+```ts
+function resolveSelection(doc: TimelineDocument, clipIds: readonly string[], primaryClipId?: string | null): TimelineSelection
+```
+
+### `cleanupTracks()`
+
+```ts
+function cleanupTracks(doc: TimelineDocument, policies?: EditPolicies, magnetEnabled?: boolean): { document: TimelineDocument; changed: boolean; }
+```
+
+### `trimClip()`
+
+```ts
+function trimClip(doc: TimelineDocument, params: { trackIndex: number; clipIndex: number; offsetMs: number; edge: "start" | "end"; }, policies?: EditPolicies): { document: TimelineDocument; changed: boolean; }
+```
+
+### `splitClipAtMs()`
+
+```ts
+function splitClipAtMs(doc: TimelineDocument, params: { trackIndex: number; clipIndex: number; splitMs: number; }, policies?: EditPolicies): { document: TimelineDocument; leftClipId: string | null; rightClipId: string | null; changed: boolean; }
+```
+
+### `deleteClips()`
+
+```ts
+function deleteClips(doc: TimelineDocument, clipIds: readonly string[], policies?: EditPolicies, magnetEnabled?: boolean): { document: TimelineDocument; changed: boolean; }
+```
+
+### `moveClip()`
+
+```ts
+function moveClip(doc: TimelineDocument, params: { sourceTrackIndex: number; sourceClipIndex: number; targetTrackIndex: number; isNewTrack: boolean; startMs: number; endMs: number; clipType?: string; }, policies?: EditPolicies, magnetEnabled?: boolean): { document: TimelineDocument; selection: TimelineSelection; changed: boolean; }
+```
+
+### `applyMagnetMove()`
+
+```ts
+function applyMagnetMove(doc: TimelineDocument, params: { sourceTrackIndex: number; sourceClipIndex: number; targetTrackIndex: number; insertPosition: number; previewArrangement: TimelineClip[]; dragClipDurationMs: number; }, policies?: EditPolicies): { document: TimelineDocument; selection: TimelineSelection; changed: boolean; }
+```
+
+### `insertClip()`
+
+```ts
+function insertClip(doc: TimelineDocument, params: { trackIndex: number; isNewTrack: boolean; clip: TimelineClip; }, policies?: EditPolicies, magnetEnabled?: boolean): { document: TimelineDocument; selection: TimelineSelection; changed: boolean; }
+```
+
+### `toggleTrackFlag()`
+
+```ts
+function toggleTrackFlag(doc: TimelineDocument, trackIndex: number, flag: "locked" | "visible" | "muted"): { document: TimelineDocument; changed: boolean; }
+```
+
+### `isOtioTimeline()`
+
+```ts
+function isOtioTimeline(value: unknown): value is OtioTimeline
+```
+
+### `fromOtioTimeline()`
+
+```ts
+function fromOtioTimeline(timeline: OtioTimeline): TimelineDocument
+```
+
+### `toOtioTimeline()`
+
+```ts
+function toOtioTimeline(doc: TimelineDocument): OtioTimeline
+```
+
+### `getTrimOffset()`
+
+```ts
+function getTrimOffset(clip: any): { offsetPercent: number; scalePercent: number; }
+```
+
+## 类型与接口 (Types & Interfaces)
+
+### `interface TimelineTrimRange`
+
+```ts
+interface TimelineTrimRange {
+  startMs: number
+  endMs: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `startMs` | `number` |
+| `endMs` | `number` |
+
+### `interface TimelineClip`
+
+```ts
+interface TimelineClip<TMeta = Record<string, unknown>> {
+  id: string
+  type: string
+  name: string
+  startMs: number
+  endMs: number
+  resource?: string
+  durationMs?: number
+  trim?: TimelineTrimRange
+  meta?: TMeta
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `type` | `string` |
+| `name` | `string` |
+| `startMs` | `number` |
+| `endMs` | `number` |
+| `resource?` | `string` |
+| `durationMs?` | `number` |
+| `trim?` | `TimelineTrimRange` |
+| `meta?` | `TMeta` |
+
+### `interface TimelineTrack`
+
+```ts
+interface TimelineTrack<
+  TTrackMeta = Record<string, unknown>,
+  TClipMeta = Record<string, unknown>,
+> {
+  id: string
+  type: string
+  name: string
+  clips: TimelineClip<TClipMeta>[]
+  locked?: boolean
+  visible?: boolean
+  muted?: boolean
+  main?: boolean
+  meta?: TTrackMeta
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `type` | `string` |
+| `name` | `string` |
+| `clips` | `TimelineClip<TClipMeta>[]` |
+| `locked?` | `boolean` |
+| `visible?` | `boolean` |
+| `muted?` | `boolean` |
+| `main?` | `boolean` |
+| `meta?` | `TTrackMeta` |
+
+### `interface TimelineDocument`
+
+```ts
+interface TimelineDocument<
+  TTrackMeta = Record<string, unknown>,
+  TClipMeta = Record<string, unknown>,
+> {
+  id: string
+  name: string
+  fps: number
+  tracks: TimelineTrack<TTrackMeta, TClipMeta>[]
+  meta?: Record<string, unknown>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `id` | `string` |
+| `name` | `string` |
+| `fps` | `number` |
+| `tracks` | `TimelineTrack<TTrackMeta, TClipMeta>[]` |
+| `meta?` | `Record<string, unknown>` |
+
+### `interface TimelineSelection`
+
+```ts
+interface TimelineSelection {
+  trackIndex: number
+  clipIndex: number
+  clipId: string | null
+  clipIds: string[]
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `trackIndex` | `number` |
+| `clipIndex` | `number` |
+| `clipId` | `string \| null` |
+| `clipIds` | `string[]` |
+
+### `interface EditDropContext`
+
+```ts
+interface EditDropContext {
+  clip: TimelineClip
+  sourceTrack?: TimelineTrack
+  targetTrack: TimelineTrack
+  startMs: number
+  endMs: number
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `clip` | `TimelineClip` |
+| `sourceTrack?` | `TimelineTrack` |
+| `targetTrack` | `TimelineTrack` |
+| `startMs` | `number` |
+| `endMs` | `number` |
+
+### `interface EditPolicies`
+
+```ts
+interface EditPolicies {
+  allowOverlap: boolean
+  allowCrossTrackType: boolean
+  removeEmptyTracks: boolean
+  orderAudioToBottom: boolean
+  minClipDurationMs?: number
+  canDrop?: (ctx: EditDropContext) => boolean
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `allowOverlap` | `boolean` |
+| `allowCrossTrackType` | `boolean` |
+| `removeEmptyTracks` | `boolean` |
+| `orderAudioToBottom` | `boolean` |
+| `minClipDurationMs?` | `number` |
+| `canDrop?` | `(ctx: EditDropContext) => boolean` |
+
+## 常量 (Constants)
+
+### `DEMO_FPS`
+
+```ts
+const DEMO_FPS: 24
+```
+
+### `demoDocument`
+
+```ts
+const demoDocument: TimelineDocument<Record<string, unknown>, Record<string, unknown>>
+```
+
+### `DEFAULT_EDIT_POLICIES`
+
+```ts
+const DEFAULT_EDIT_POLICIES: EditPolicies
+```
+
+### `OTIO_DEMO_FPS`
+
+```ts
+const OTIO_DEMO_FPS: 24
+```
+
+### `otioDemoTimeline`
+
+```ts
+const otioDemoTimeline: OtioTimeline
+```

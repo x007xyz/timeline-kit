@@ -1,0 +1,59 @@
+---
+title: React 集成 (Portal + Hooks)
+description: 使用 timeline-kit/react 挂载基于 React Portal 的自定义 Clip 插槽并订阅切片状态。
+---
+
+import ReactTimelineDemo from '../../../components/ReactTimelineDemo';
+
+`timeline-kit/react` 封装了一个薄适配层，内部通过 `createSlotBridge()` 与 `ReactDOM.createPortal` 将宿主的 JSX 组件直接投射到时间轴渲染器管理的 DOM 宿主节点中：
+
+- **保留完整 React 上下文**：片段内部的 JSX 可以直接消费外层的 Theme、Router、i18n 与状态 Context；
+- **组件保活与按需回收**：播放头移动或选中态更新不会卸载重建组件，片段滚出虚拟视口时自动卸载；
+- **零撕裂读取**：`useTimelineSelector` 基于 React 18+ 原生 `useSyncExternalStore` 实现。
+
+## 在线 React 真实岛屿示例
+
+下方组件由 `@astrojs/react` 在浏览器中真实运行 React 19，并同步挂载了 Mediabunny 简易画板与实时播放器：尝试播放预览、拖动花字/图片，或点击片段切换 Portal 插槽主题：
+
+<ReactTimelineDemo client:only="react" />
+
+## 代码示例
+
+```tsx
+import { useRef, useState } from 'react'
+import { demoDocument, type ClipRenderContext } from 'timeline-kit'
+import {
+  TimelineEditor,
+  useTimelineSelector,
+  type TimelineEditorRef,
+} from 'timeline-kit/react'
+
+export function StudioTimeline() {
+  const editorRef = useRef<TimelineEditorRef | null>(null)
+  const [editor, setEditor] = useState<ReturnType<TimelineEditorRef['getEditor']>>(null)
+
+  const currentFrame = useTimelineSelector(editor, s => s.currentFrame) ?? 0
+  const selectedId = useTimelineSelector(editor, s => s.selection.clipId)
+
+  return (
+    <div>
+      <div>当前帧: {currentFrame} · 选中: {selectedId ?? '无'}</div>
+      <div style={{ height: 340 }}>
+        <TimelineEditor
+          ref={editorRef}
+          document={demoDocument}
+          theme="dark"
+          onReady={setEditor}
+          renderClip={(ctx: ClipRenderContext) => (
+            <div style={{ padding: 6 }}>
+              <strong>{ctx.clip.name}</strong>
+              <div>{ctx.isSelected ? '已选中' : ctx.clip.type}</div>
+            </div>
+          )}
+          onDocumentChange={({ document }) => saveDraft(document)}
+        />
+      </div>
+    </div>
+  )
+}
+```

@@ -1,0 +1,17 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "timeline-kit": ["../src/index.ts"],
+      "timeline-kit/core": ["../src/core-entry.ts"],
+      "timeline-kit/otio": ["../src/otio-entry.ts"],
+      "timeline-kit/plugins": ["../src/plugins-entry.ts"],
+      "timeline-kit/react": ["../adapters/react/index.ts"],
+      "timeline-kit/vue": ["../adapters/vue/index.ts"],
+      "@demo/*": ["../demo/*"]
+    }
+  },
+  "include": ["src"]
+}

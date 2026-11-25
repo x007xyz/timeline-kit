@@ -1,0 +1,69 @@
+---
+title: 媒体可视化（缩略图与波形）
+description: 通过 MediaProvider 接入 Mediabunny (WebCodecs CanvasSink & AudioBufferSink)，将真实视频胶片条与 PCM 波形绘制到高性能 Canvas 层。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+`timeline-kit` 核心保持零运行时依赖，将媒体解复用、WebCodecs 解码与缓存策略保留在宿主应用层，并通过简洁的 `MediaProvider` Canvas 钩子接入编辑器内部渲染管线：
+
+```ts
+export interface MediaProvider {
+  renderFilmstrip?: (canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) | void
+  renderWaveform?: (canvas: HTMLCanvasElement, ctx: ClipRenderContext) => (() => void) | void
+}
+```
+
+## 工作机制
+
+当某条轨道未自定义 `trackConfigs[type].clip` 插槽时，默认媒体片段渲染器会自动创建带有 `devicePixelRatio` 缩放尺寸的 `<canvas data-media-role="filmstrip">` 与 `<canvas data-media-role="waveform">`，并调用宿主注入的 `mediaProvider`：
+
+1. **按裁剪区间精准切片**：`ctx.clip.trim` 与 `ctx.clip.durationMs` 提供了当前片段在原素材中的起止毫秒，绘制函数据此计算精确时间戳传给 `mediabunny` 的 `CanvasSink.canvasesAtTimestamps()` 或裁剪 `AudioBufferSink` PCM 峰值区间。
+2. **缩放降级与停手重绘**：`ctx.renderHints.zoomActive` 在连续滚轮缩放期间为 `true`，此时可减少抽帧数量保证跟手性；用户停手 160ms 后 `settleVersion` 递增且 `zoomActive` 恢复 `false`，触发高清重绘。
+3. **自动生命周期清理**：如果异步解码仍在队列中，只需返回一个清理函数 `() => void`（调用异步迭代器 `.return?.()` 或置位中止标记），片段滚出可视区或被删除时渲染器会自动执行清理。
+
+```ts
+import { Input, ALL_FORMATS, UrlSource, CanvasSink, AudioBufferSink } from 'mediabunny'
+import { createTimelineEditor } from 'timeline-kit'
+
+const editor = createTimelineEditor(container, {
+  document: doc,
+  mediaProvider: {
+    renderFilmstrip(canvas, ctx) {
+      let aborted = false
+      const input = new Input({
+        formats: ALL_FORMATS,
+        source: new UrlSource(ctx.clip.resource!),
+      })
+      ;(async () => {
+        const videoTrack = await input.getPrimaryVideoTrack()
+        if (!videoTrack || !(await videoTrack.canDecode()) || aborted) return
+        const sink = new CanvasSink(videoTrack, { width: 128, height: 72, fit: 'cover' })
+        for await (const wrapped of sink.canvasesAtTimestamps(timestamps)) {
+          if (aborted) break
+          if (wrapped) drawThumb(canvas, wrapped.canvas)
+        }
+      })()
+      return () => {
+        aborted = true
+        input.dispose()
+      }
+    },
+    renderWaveform(canvas, ctx) {
+      drawPeaksWithAudioBufferSink(canvas, ctx.clip)
+    },
+  },
+})
+```
+
+## 多轨视频缩略图与 Canvas 同步预览（Mediabunny）
+
+该示例使用 [`mediabunny`](https://github.com/Vanilagy/mediabunny) 读取本地真实 `.mp4` 文件（`Sintel Short`、`Flower`、`Rabbit`、`Bug`），通过 `CanvasSink.canvasesAtTimestamps()` 稀疏解码绘制胶片条，并用 `CanvasSink` + `AudioBufferSink` + WebAudio 驱动上方预览播放器。尝试拖动左右手柄裁剪片段或点击播放：
+
+<TimelinePlayground scenario="video-filmstrip" height="300px" showPreview={true} />
+
+## 播客多轨音频波形与网格吸附（Mediabunny AudioBufferSink）
+
+该场景直接通过 `mediabunny` 的 `AudioBufferSink.buffers()` 解码 4 条真实 `.mp3` 音频（对白、环境声、电子乐、音效），计算归一化 PCM 峰值并绘制多角色波形，默认开启 500ms 网格吸附；上方画板会在暂停拖动时随播放头实时滚动多轨 PCM 视图，点击播放后切换为 WebAudio `AnalyserNode` 实时频谱与示波器：
+
+<TimelinePlayground scenario="podcast-audio" height="360px" />

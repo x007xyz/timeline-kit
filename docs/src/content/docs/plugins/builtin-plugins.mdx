@@ -1,0 +1,64 @@
+---
+title: 内置与官方插件
+description: 开箱即用的默认插件、官方扩展插件以及内置命令与快捷键清单。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+## 默认内置插件 (`createDefaultPlugins()`)
+
+除非配置了 `disableDefaultPlugins: true`，编辑器实例化时会自动加载以下插件：
+
+- `builtin:snap-defaults`：提供 `playheadSnapProvider`（播放头吸附）与 `clipEdgeSnapProvider`（其他片段首尾边缘吸附）。
+- `builtin:playhead`：播放头拖拽、标尺跳转及方向键微调。
+- `builtin:clip-trim`：片段左右裁剪手柄。
+- `builtin:clip-drag`：片段拖拽、磁吸重排预览与跨轨创建。
+- `builtin:selection`：片段点击选中、`Ctrl/Cmd + 点击` 多选与空白处点击清选。
+- `builtin:wheel`：`Ctrl/Cmd + 滚轮` 以鼠标所在时间点为锚点缩放，`Shift + 滚轮` 横向滚动画布，并在停手 160ms 后递增 `settleVersion`。
+- `builtin:shortcuts`：内置快捷键绑定。
+
+## 官方可选扩展插件 (`timeline-kit/plugins`)
+
+| 插件 / 吸附源 | 作用 |
+| --- | --- |
+| `createMarqueeSelectPlugin()` | 在空白轨道区域拖动绘制框选矩形，自动选中相交且所在轨道未锁定的全部片段 |
+| `createExternalDropPlugin({ resolveItem })` | 接入宿主素材库 `DataTransfer` 拖放，带吸附参考线与幽灵预览框 |
+| `createGridSnapProvider({ stepMs, enabled })` | 按固定时间间隔（如 `500ms`）生成网格吸附点 |
+
+## 自定义或禁用快捷键
+
+可通过 `shortcuts` 和 `keymap` 选项覆盖默认键位，传入 `null` 即可单独禁用某个快捷键，传入 `shortcuts: false` 可关闭全部默认快捷键：
+
+```ts
+const editor = createTimelineEditor(container, {
+  document: doc,
+  keymap: {
+    'Mod+D': (_event, ctx) => ctx.commands.execute('clip:delete'),
+    'Delete': null, // 禁用 Delete 键删除
+  },
+})
+```
+
+## 标准命令表
+
+调用 `editor.exec(command, payload)` 或配置工具栏按钮 `command` 时可使用以下标准命令名（同时兼容旧版短别名）：
+
+| 标准命令 | 旧版别名 | 说明 |
+| --- | --- | --- |
+| `clip:move` / `clip:magnet-move` | — | 提交标准移动或磁吸重排 |
+| `clip:trim` | — | 提交左右边缘裁剪 |
+| `clip:split` | `split` | 在当前播放头位置分割选中片段 |
+| `clip:delete` | `delete` | 删除当前选中片段 |
+| `clip:insert` | — | 插入新片段 |
+| `track:toggle-flag` | — | 切换轨道 `locked` / `visible` / `muted` |
+| `selection:set` / `selection:clear` | — | 设置或清空选区 |
+| `playhead:set` | — | 设置播放头帧位置 |
+| `scale:set` / `scale:zoom-in` / `scale:zoom-out` / `scale:fit` | `zoom-in` / `zoom-out` / `fit` | 缩放控制与适应视口 |
+| `magnet:toggle` / `magnet:set` | `magnet` | 切换或设置主轨磁吸 |
+| `history:undo` / `history:redo` | `undo` / `redo` | 撤销与重做 |
+
+## 外部拖入与框选演示
+
+从下方素材条拖拽卡片直接丢进时间轴轨道，或在空白处拖动拉框多选：
+
+<TimelinePlayground scenario="full-studio" height="360px" showMaterialPalette={true} />

@@ -1,0 +1,43 @@
+---
+title: timeline-kit
+description: 框架无关、插件驱动的 DOM + Canvas 混合时间轴编辑器组件库
+template: splash
+hero:
+  tagline: 轻量数据模型 + 双向 OTIO 兼容 + 视口虚拟化 + 插件化交互，原生 / React / Vue 开箱即用。
+  actions:
+    - text: 快速开始
+      link: /guide/getting-started/
+      icon: right-arrow
+    - text: 打开完整工作台（简易画板）
+      link: /examples/studio/
+      variant: secondary
+    - text: 浏览 7 大交互场景
+      link: /examples/scenarios/
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import TimelinePlayground from '../../components/TimelinePlayground.astro';
+
+## 在线交互工作台（简易画板 + 时间轴）
+
+支持点击标尺跳转、`Space` / 播放按钮实时音视频回放、画板内直接拖拽花字与图片、画幅切换、从素材栏拖入片段以及主题切换（[进入完整工作台指南](/examples/studio/)）：
+
+<TimelinePlayground scenario="full-studio" height="400px" showMaterialPalette={true} showPreview={true} studioMode={true} />
+
+## 核心特性
+
+<CardGrid stagger>
+  <Card title="轻量模型 + OTIO 互操作" icon="document">
+    对外提供直觉的 `TimelineDocument`（`tracks / clips`）扁平模型，同时内置 `timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1`。
+  </Card>
+  <Card title="DOM + Canvas 混合虚拟化渲染" icon="rocket">
+    DOM 负责结构与任意自定义插槽，Canvas 2D 绘制标尺、胶片缩略图与真实 PCM 波形，示例内建基于 Mediabunny (WebCodecs) 的真实音视频解码与预览；脏通道增量更新 + 横向虚拟挂载保障 60fps 交互流畅度。
+  </Card>
+  <Card title="CommandBus 与可插拔交互" icon="puzzle">
+    拖拽、裁剪、播放头、滚轮缩放、快捷键、框选与外部拖入全部构建在统一的 `InteractionManager` 与 `CommandBus` 之上，支持外部历史栈接管。
+  </Card>
+  <Card title="原生 / React / Vue 多端同源" icon="laptop">
+    同一份零依赖内核同时导出原生控制器的 `timeline-kit`、基于 Portal 的 `timeline-kit/react` 与基于 Teleport 插槽的 `timeline-kit/vue`。
+  </Card>
+</CardGrid>

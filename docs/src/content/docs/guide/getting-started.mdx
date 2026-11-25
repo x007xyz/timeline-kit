@@ -1,0 +1,103 @@
+---
+title: 快速开始
+description: 在 Vanilla JS/TS、React 与 Vue 3 中 5 分钟接入 timeline-kit。
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+`timeline-kit` 采用单仓库多入口导出设计，内核零第三方运行时依赖，宿主可按需引入：
+
+| 入口路径 | 用途 |
+| --- | --- |
+| `timeline-kit` | 开箱即用完整编辑器（内核 + DOM/Canvas 渲染器 + 默认插件 + OTIO 适配器） |
+| `timeline-kit/core` | 纯逻辑与无头内核（`model`、`engine`、`store`、`InteractionManager`、`SlotBridge`） |
+| `timeline-kit/otio` | OpenTimelineIO 底层数据结构（`otio-core`）与双向适配器 |
+| `timeline-kit/plugins` | 官方交互插件（框选多选、外部拖入、网格吸附等） |
+| `timeline-kit/react` | React 18/19 适配组件与 `useTimelineSelector` Hook |
+| `timeline-kit/vue` | Vue 3 适配组件与 `useTimelineSelector` 组合式函数 |
+
+## 多框架接入
+
+<Tabs>
+  <TabItem label="Vanilla JS / TS">
+    ```ts
+    import {
+      createTimelineEditor,
+      demoDocument,
+      createMarqueeSelectPlugin,
+    } from 'timeline-kit'
+
+    const editor = createTimelineEditor(document.getElementById('timeline')!, {
+      document: demoDocument,
+      theme: 'auto',
+      trackScale: 50,
+      trackConfigs: {
+        video: { type: 'video', height: 68 },
+        audio: { type: 'audio', height: 56 },
+        image: { type: 'image', height: 64 },
+        text: { type: 'text', height: 52 },
+      },
+      plugins: [createMarqueeSelectPlugin()],
+    })
+
+    editor.subscribeSelector(
+      state => state.currentFrame,
+      frame => console.log('当前帧:', frame),
+    )
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { TimelineEditor } from 'timeline-kit/react'
+    import { demoDocument } from 'timeline-kit'
+
+    export function EditorView() {
+      return (
+        <div style={{ height: 360 }}>
+          <TimelineEditor
+            document={demoDocument}
+            theme="dark"
+            renderClip={({ clip, isSelected }) => (
+              <div className={isSelected ? 'clip active' : 'clip'}>
+                {clip.name}
+              </div>
+            )}
+            onDocumentChange={({ document }) => {
+              console.log('最新文档', document)
+            }}
+          />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem label="Vue 3">
+    ```vue
+    <script setup lang="ts">
+    import { TimelineEditor } from 'timeline-kit/vue'
+    import { demoDocument } from 'timeline-kit'
+    </script>
+
+    <template>
+      <div style="height: 360px">
+        <TimelineEditor :document="demoDocument" theme="dark">
+          <template #clip="{ clip, isSelected }">
+            <div :class="['clip', { active: isSelected }]">
+              {{ clip.name }}
+            </div>
+          </template>
+        </TimelineEditor>
+      </div>
+    </template>
+    ```
+  </TabItem>
+</Tabs>
+
+## 最小可交互示例
+
+<TimelinePlayground scenario="full-studio" height="360px" />
+
+<Aside type="tip">
+内置样式会自动通过 `ensureTimelineStyles()` 注入到文档头部，宿主只需为容器元素提供明确的高度与宽度（如 `height: 360px`）。如需完全接管样式，可传入 `injectStyles: false`。
+</Aside>

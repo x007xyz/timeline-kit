@@ -1,0 +1,17 @@
+---
+title: 完整工作台（简易画板 + 时间轴）
+description: 基于 Mediabunny WebCodecs 与 Canvas 2D 多轨合成的完整剪辑工作台：支持画板交互拖拽、比例切换、网格参考线、实时播放与 WebAudio 电平表。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+本工作台将 `timeline-kit` 多轨时间轴与自研 **Canvas 2D 简易画板（Stage Canvas）** 深度联动，全链路使用 [Mediabunny](https://github.com/Vanilagy/mediabunny) 解码真实 `.mp4` / `.mp3` 与实拍 `.jpg` 素材：
+
+<TimelinePlayground scenario="full-studio" height="400px" showMaterialPalette={true} showPreview={true} studioMode={true} />
+
+## 工作台交互能力
+
+- **实时音视频回放（Spaceship Transport）**：点击 `▶ 播放` 或按 `Space` 启停回放；支持 `0.5x / 1x / 1.5x / 2x` 倍速、单帧步进（`-1f / +1f`）、回到开头（`⏮`）、循环播放与总控静音（`🔇`），右侧 **WebAudio `AnalyserNode` VU 电平表**实时反映混合音量峰值。
+- **多轨 Canvas 合成与轨道可见性联动**：在同一画布内依次叠加主视频轨（`CanvasSink`）、图片贴纸轨与花字/字幕轨；点击时间轴左侧轨道 **显隐/静音** 按钮时，画板画面与声音即时同步。
+- **画板直接拖拽与撤销同步**：在播放画布内点击选中或拖动照片贴纸、花字图层时，坐标自动写入 `clip.meta.stage`（支持 `Ctrl/Cmd + Z` 撤销重做），并与时间轴选中状态双向绑定。
+- **画幅切换、网格与花字快捷添加**：支持 `16:9` / `9:16` / `1:1` 比例切换、三分法安全区参考线、当前帧 `+ 花字` 快捷插入，以及 `📷 截图` 导出当前合成帧 PNG。

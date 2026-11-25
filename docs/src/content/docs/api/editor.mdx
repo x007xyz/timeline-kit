@@ -1,0 +1,127 @@
+---
+title: Editor 控制器与选项
+description: TimelineEditor 主控制器、createTimelineEditor 工厂函数与配置项 API 参考。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note">
+本页由 `scripts/gen-api-docs.mjs` 从以下源码入口自动提取生成：`src/editor/index.ts`。
+</Aside>
+
+## 类 (Classes)
+
+### `class TimelineEditor`
+
+```ts
+class TimelineEditor {
+  constructor(container: HTMLElement, options: TimelineEditorOptions = {});
+  getDocument(): TimelineDocument;
+  setDocument(doc: TimelineDocument, options?: { pushHistory?: boolean; }): void;
+  getTimeline(): TimelineDocument;
+  setTimeline(timeline: TimelineDocument | OtioTimeline, options?: { pushHistory?: boolean; }): void;
+  getOtioTimeline(): OtioTimeline;
+  getCurrentFrame(): number;
+  setCurrentFrame(frame: number): void;
+  getTrackScale(): number;
+  setTrackScale(scale: number, renderHints?: Partial<TimelineRenderHints>): void;
+  fitToView(): number | null;
+  scrollToTime(ms: number): void;
+  setSelection(selection: TimelineSelectionInput): void;
+  clearSelection(): void;
+  setMagnetEnabled(enabled: boolean): void;
+  setHistoryMode(mode: HistoryMode): void;
+  setExternalHistoryState(flags: { canUndo?: boolean; canRedo?: boolean; }): void;
+  setTrackConfigs(trackConfigs: TrackConfigMap | undefined): void;
+  setToolsConfigs(toolsConfigs: ToolbarConfig[] | undefined): void;
+  setUI(ui: UIConfig): void;
+  setTheme(theme: ThemeMode): void;
+  setPolicies(policies: Partial<EditPolicies>): void;
+  setRenderHints(renderHints: Partial<TimelineRenderHints>): void;
+  setMediaProvider(provider: MediaProvider | undefined): void;
+  exec(command: string, payload?: unknown): boolean;
+  canExecute(command: string, payload?: unknown): boolean;
+  registerCommand<TPayload = any>(type: string, spec: CommandSpec<TPayload>): () => void;
+  onBeforeCommand(hook: BeforeCommandHook): () => void;
+  use(plugin: TimelinePlugin): () => void;
+  removePlugin(name: string): boolean;
+  getState(): TimelineState;
+  getSnapshot(): TimelineEditorSnapshot;
+  subscribe(listener: (change: TimelineStateChange) => void): () => void;
+  subscribeSelector<TSelected>(selector: (state: TimelineState) => TSelected, listener: (selected: TSelected, prevSelected: TSelected) => void, isEqual?: (a: TSelected, b: TSelected) => boolean): () => void;
+  resize(): void;
+  destroy(): void;
+}
+```
+
+## 函数 (Functions)
+
+### `createTimelineEditor()`
+
+```ts
+function createTimelineEditor(container: HTMLElement, options?: TimelineEditorOptions): TimelineEditor
+```
+
+## 类型与接口 (Types & Interfaces)
+
+### `interface TimelineEditorOptions`
+
+```ts
+interface TimelineEditorOptions {
+  document?: TimelineDocument
+  timeline?: TimelineDocument | OtioTimeline
+  fps?: number
+  currentFrame?: number
+  trackScale?: number
+  isMagnetEnabled?: boolean
+  trackConfigs?: TrackConfigMap
+  toolsConfigs?: ToolbarConfig[]
+  ui?: UIConfig
+  theme?: ThemeMode
+  injectStyles?: boolean
+  policies?: Partial<EditPolicies>
+  history?: HistoryMode
+  onBeforeCommand?: BeforeCommandHook
+  plugins?: TimelinePlugin[]
+  disableDefaultPlugins?: boolean
+  shortcuts?: boolean | ShortcutsPluginOptions
+  keymap?: Record<string, KeyBinding | null>
+  mediaProvider?: MediaProvider
+  renderHints?: Partial<TimelineRenderHints>
+}
+```
+
+| 属性 | 类型 |
+| --- | --- |
+| `document?` | `TimelineDocument` |
+| `timeline?` | `TimelineDocument \| OtioTimeline` |
+| `fps?` | `number` |
+| `currentFrame?` | `number` |
+| `trackScale?` | `number` |
+| `isMagnetEnabled?` | `boolean` |
+| `trackConfigs?` | `TrackConfigMap` |
+| `toolsConfigs?` | `ToolbarConfig[]` |
+| `ui?` | `UIConfig` |
+| `theme?` | `ThemeMode` |
+| `injectStyles?` | `boolean` |
+| `policies?` | `Partial<EditPolicies>` |
+| `history?` | `HistoryMode` |
+| `onBeforeCommand?` | `BeforeCommandHook` |
+| `plugins?` | `TimelinePlugin[]` |
+| `disableDefaultPlugins?` | `boolean` |
+| `shortcuts?` | `boolean \| ShortcutsPluginOptions` |
+| `keymap?` | `Record<string, KeyBinding \| null>` |
+| `mediaProvider?` | `MediaProvider` |
+| `renderHints?` | `Partial<TimelineRenderHints>` |
+
+### `type TimelineEditorSnapshot`
+
+```ts
+type TimelineEditorSnapshot = TimelineState
+```
+
+### `type TimelineSelectionInput`
+
+```ts
+type TimelineSelectionInput = Partial<TimelineSelection> | string | string[] | null
+```

@@ -1,0 +1,54 @@
+---
+title: 主题定制、无头模式与虚拟化
+description: 配置显式主题与 CSS Tokens、隐藏默认工具栏/侧栏，以及百级片段横向视口虚拟化机制。
+---
+
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+## 显式主题与 CSS Design Tokens
+
+`timeline-kit` 使用 `theme: 'light' | 'dark' | 'auto'` 显式控制样式变量，并在主题切换时同步重绘 Canvas 标尺色板：
+
+```ts
+const editor = createTimelineEditor(container, {
+  document: doc,
+  theme: 'dark', // 'light' | 'dark' | 'auto'
+})
+
+// 运行时切换主题
+editor.setTheme('light')
+```
+
+全部外观均可直接在容器上覆写 `--tk-*` 变量进行深度定制（无需加 `!important`）：
+
+| CSS 变量 | 作用 |
+| --- | --- |
+| `--tk-bg` / `--tk-surface` / `--tk-panel` | 编辑器外框、轨道区底色、侧栏头部底色 |
+| `--tk-border` / `--tk-border-strong` | 边框与选中高亮框颜色 |
+| `--tk-track` | 轨道行背景色 |
+| `--tk-text` / `--tk-muted` | 主文字与次要图标颜色 |
+| `--tk-accent` | 主题强调色（滑块、激活按钮、辅助线、框选矩形） |
+| `--tk-ruler-bg` / `--tk-ruler-text` / `--tk-ruler-long` | Canvas 标尺背景、时间文本与主刻度色 |
+
+## 模块化开关 UI 壳 (`UIConfig`)
+
+工具栏、侧栏和标尺都可以独立关闭或局部定制，底层采用纯 Flex 布局，隐藏任意模块都不会产生硬编码偏移错位：
+
+```ts
+editor.setUI({
+  toolbar: false,
+  sidebar: { width: 128, showTrackActions: true },
+  ruler: true,
+})
+```
+
+## 脏区通道与横向视口虚拟化
+
+- **脏区通道 (`RenderChannel`)**：`setCurrentFrame()` 仅标记 `'playhead'` 通道，只更新播放头 `left` 像素值；`setSelection()` 仅标记 `'selection'` 与 `'toolbar'`，不会触发轨道重排版。
+- **横向视口虚拟化**：`DomTimelineRenderer` 根据 `scrollLeft`、`clientWidth` 和 `240px` 前后 overscan 缓冲区，仅挂载可视时间窗内的片段 DOM，并将正在选中/拖拽中的片段通过 `alwaysIncludeIds` 锁定保留，滚出视野后自动调用 `slotHandle.destroy()` 回收资源。
+
+## 128 片段虚拟化压测演示
+
+下方工程包含 **4 轨共 128 个片段（总时长 320 秒）**。留意底部状态栏中的 `DOM X/128` 计数：水平拖动滚动条时，只有可视区附近的片段会被真实挂载到 DOM 中：
+
+<TimelinePlayground scenario="virtualized-stress" height="340px" />

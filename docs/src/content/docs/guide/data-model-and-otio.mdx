@@ -1,0 +1,90 @@
+---
+title: 数据模型与 OTIO 适配
+description: 使用轻量的 TimelineDocument 扁平结构，并在需要时与 OpenTimelineIO 双向无损互转。
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import TimelinePlayground from '../../../components/TimelinePlayground.astro';
+
+`timeline-kit` 将 **轻量扁平的 `TimelineDocument`（`tracks / clips`）** 作为默认数据真源，消除了传统剪辑内核在每次拖拽、裁剪时反复与复杂树结构互转的性能开销；同时保留完整的 OTIO 双向适配器以支持影视工业化管线与历史工程迁移。
+
+## `TimelineDocument` 结构
+
+```ts
+import type { TimelineDocument } from 'timeline-kit'
+
+const doc: TimelineDocument = {
+  id: 'demo-project',
+  name: '我的短视频工程',
+  fps: 24,
+  tracks: [
+    {
+      id: 'track-v1',
+      type: 'video',
+      name: 'V1: 主视频轨',
+      main: true,        // 启用主轨磁吸时自动无缝重排
+      visible: true,
+      muted: false,
+      locked: false,
+      clips: [
+        {
+          id: 'clip-1',
+          type: 'video',
+          name: '开场镜头.mp4',
+          startMs: 0,
+          endMs: 4000,
+          durationMs: 10000,            // 媒体原始总时长（用于裁剪边界限制）
+          trim: { startMs: 1500, endMs: 5500 },
+          resource: 'https://example.com/opening.mp4',
+          meta: { scenePreset: 'mountain' },
+        },
+      ],
+    },
+  ],
+}
+```
+
+## 纯函数编辑操作
+
+所有对 `TimelineDocument` 的编辑均在 `src/model/operations.ts` 以纯不可变函数实现，可在服务端、Web Worker 或单元测试中脱离 DOM 独立运行：
+
+- `moveClip` / `applyMagnetMove`：跨轨移动、新建轨道、重叠/跨轨校验与主轨波纹插入。
+- `trimClip`：左右边缘裁剪，自动约束最小时长、相邻片段不重叠边界以及音视频 `durationMs` / `trim` 物理边界。
+- `splitClipAtMs`：按毫秒切分片段，自动拆分 `trim` 区间并生成不冲突的新片段 ID。
+- `deleteClips` / `insertClip` / `toggleTrackFlag` / `cleanupTracks`。
+
+## 双向 OTIO 适配
+
+`TimelineEditor` 的初始化参数与 `setTimeline()` 同时兼容 `TimelineDocument` 和标准 OTIO `Timeline.1` JSON：
+
+```ts
+import {
+  createTimelineEditor,
+  fromOtioTimeline,
+  toOtioTimeline,
+  isOtioTimeline,
+  otioDemoTimeline,
+} from 'timeline-kit'
+
+// 1. 直接用 OTIO 数据初始化编辑器
+const editor = createTimelineEditor(container, {
+  timeline: otioDemoTimeline,
+})
+
+// 2. 运行时随时导出标准 OTIO Timeline.1 对象
+const exportedOtio = editor.getOtioTimeline()
+
+// 3. 脱离 UI 单独做格式转换
+const doc = fromOtioTimeline(otioDemoTimeline)
+const backToOtio = toOtioTimeline(doc)
+```
+
+<Aside type="note">
+`fromOtioTimeline()` 会优先读取标准 `metadata.timelineKit`，并在缺失时自动向下兼容读取旧版 `metadata.flyCut`（包括 `lock` / `visible` / `mute` / `main` / `trimInfo` / `resourceInfo`），方便历史项目无缝升级。
+</Aside>
+
+## 实时 OTIO 导入导出演示
+
+编辑下方轨道（移动、裁剪或分割片段），上方 JSON 预览会实时反映 `editor.getOtioTimeline()` 生成的 `Gap.1` 与 `Clip.1` 序列：
+
+<TimelinePlayground scenario="otio-roundtrip" height="340px" />
