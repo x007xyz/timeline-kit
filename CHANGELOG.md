@@ -23,14 +23,32 @@
 
 ### 变更
 
-- 库构建改为按入口分别输出 ESM 与 `dist/types/**.d.ts` 类型声明。
+- 库构建改为按入口分别输出 ESM 与 `dist/types/**.d.ts` 类型声明；类型声明中的相对路径带显式扩展名，`moduleResolution` 为 `bundler`、`node16`、`nodenext` 时均可解析。
 - 快捷键作用域限定在最近一次使用的编辑器，多个编辑器共享页面时互不干扰。
-- 撤销历史改用结构共享，替代深拷贝。
+- 撤销历史改用结构共享（新增导出 `shareStructure`）：历史栈保存文档引用，未变化的轨道与片段在版本间复用，不再每步深拷贝整份文档。
+- `getTrimOffset` 的参数类型由 `any` 改为 `unknown`（对调用方兼容）。
+
+### 修复
+
+- Vue 适配层：挂载后才传入的 `onBeforeCommand` 钩子此前不会被调用。
 
 ### 无障碍
 
-- 为编辑器补充 ARIA 角色与标签，并增加 live region 用于播报状态变化。
+- 根节点 `role="application"`，可通过 `ui.ariaLabel` 自定义名称（默认 "Timeline"）。
+- 轨道为带状态说明的 `group` / `listbox`，片段为带时间范围标签的 `option` 并同步 `aria-selected`。
+- 播放头为可聚焦的 `slider`（`aria-valuenow` / `aria-valuetext`）；轨道与磁吸开关提供 `aria-pressed`；装饰性 Canvas 设为 `aria-hidden`。
+- `:focus-visible` 焦点样式；`aria-live="polite"` 区域播报选择变化。
+
+### 工程
+
+- 引入 ESLint（typescript-eslint）与 GitHub Actions CI（lint、类型检查、单元测试、构建、打包检查、E2E）。
+- 开启 `noUnusedLocals` / `noUnusedParameters`；React / Vue 适配层改用真实类型做类型检查。
+- `docs/public/assets` 改为由 `demo/assets` 同步生成，不再重复纳入版本管理。
 
 ### 测试
 
-- 扩充单元测试、适配器测试与 Chromium 端到端测试。
+- 新增结构共享与历史栈测试、React / Vue 适配层行为测试（happy-dom）、无障碍与多实例快捷键 E2E 测试。
+
+### 已知限制
+
+- 无障碍标签目前为英文，而工具栏按钮的提示文字为中文，读屏输出会混合两种语言；后续版本计划提供本地化配置。
