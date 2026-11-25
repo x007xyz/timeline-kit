@@ -45,7 +45,7 @@
 
 ### 许可证
 
-- 以 [PolyForm Noncommercial License 1.0.0](./LICENSE) 发布：非商业用途免费，商业用途需联系 x007xyzabc@gmail.com 取得商业授权。
+- 双许可：以 [AGPL-3.0-only](./LICENSE) 开源；不能或不想按 AGPL 开源自身应用的用户，可联系 x007xyzabc@gmail.com 取得商业授权。
 
 ### 工程
 

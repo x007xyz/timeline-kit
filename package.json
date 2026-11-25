@@ -15,7 +15,7 @@
     "react",
     "vue"
   ],
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "AGPL-3.0-only",
   "author": "timeline-kit authors <x007xyzabc@gmail.com>",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

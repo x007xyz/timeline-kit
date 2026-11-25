@@ -4,6 +4,15 @@ import { defineConfig } from 'vite'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 
+// Kept in every emitted chunk (`/*!` survives minifiers) so the notice travels
+// with the code even when files are copied out of node_modules.
+const banner = `/*!
+ * timeline-kit
+ * Copyright (c) 2026 timeline-kit authors <x007xyzabc@gmail.com>
+ * Dual-licensed: AGPL-3.0-only (see LICENSE) or a commercial license.
+ * Commercial licensing: x007xyzabc@gmail.com
+ */`
+
 // Peer dependencies are never bundled into the library output.
 const externals = [/^react(\/.*)?$/, /^react-dom(\/.*)?$/, /^vue(\/.*)?$/]
 
@@ -51,6 +60,7 @@ export default defineConfig(({ command, mode }) => {
         external: externals,
         output: {
           chunkFileNames: 'chunks/[name]-[hash].js',
+          banner,
         },
       },
     },
