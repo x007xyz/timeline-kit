@@ -198,5 +198,9 @@ pnpm dev
 
 ## 许可证
 
-本项目基于 [MIT License](./LICENSE) 发布，版权归 timeline-kit contributors 所有。
+本项目基于 [PolyForm Noncommercial License 1.0.0](./LICENSE) 发布，属于**源码公开（source-available）而非开源许可**。
+
+- **非商业用途免费**：个人学习与研究、个人项目、业余爱好，以及慈善、教育、科研、公共安全、政府等非营利机构使用，均无需授权，具体范围以 [LICENSE](./LICENSE) 为准。
+- **商业用途需授权**：在商业产品、对外收费的服务或企业内部的营利性业务中使用，需要另行取得商业授权。请发邮件至 **x007xyzabc@gmail.com** 洽谈。
+- 无论哪种用途，再分发时都必须保留 LICENSE 文件中以 `Required Notice:` 开头的版权声明。
 

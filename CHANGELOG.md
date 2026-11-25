@@ -43,6 +43,10 @@
 - 播放头为可聚焦的 `slider`（`aria-valuenow` / `aria-valuetext`）；轨道与磁吸开关提供 `aria-pressed`；装饰性 Canvas 设为 `aria-hidden`。
 - `:focus-visible` 焦点样式；`aria-live="polite"` 区域播报选择变化。
 
+### 许可证
+
+- 以 [PolyForm Noncommercial License 1.0.0](./LICENSE) 发布：非商业用途免费，商业用途需联系 x007xyzabc@gmail.com 取得商业授权。
+
 ### 工程
 
 - 引入 ESLint（typescript-eslint）与 GitHub Actions CI（lint、类型检查、单元测试、构建、打包检查、E2E）。

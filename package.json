@@ -15,7 +15,8 @@
     "react",
     "vue"
   ],
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "timeline-kit authors <x007xyzabc@gmail.com>",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/src/index.d.ts",

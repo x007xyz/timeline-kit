@@ -51,6 +51,15 @@ CHROME_BIN="/path/to/chrome" npm run test:e2e
 node scripts/sync-docs-assets.mjs
 ```
 
+## 贡献的授权
+
+本项目以 PolyForm Noncommercial 1.0.0 公开发布，同时向商业用户单独提供商业授权。提交 Pull Request 即表示你：
+
+- 确认所提交的内容为你本人原创，或你有权提交；
+- 同意项目维护者以本项目当前的许可证，以及维护者另行提供的商业授权条款，使用、修改和再授权你的贡献。
+
+如不同意上述条款，请不要提交代码；如有疑问，请先联系 x007xyzabc@gmail.com。
+
 ## 提交信息规范
 
 提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)：
