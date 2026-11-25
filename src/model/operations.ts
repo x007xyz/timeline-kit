@@ -511,6 +511,20 @@ export function moveClip(
   const nextStartMs = Math.max(0, Math.round(params.startMs))
   const nextEndMs = nextStartMs + Math.round(durationMs)
 
+  if (
+    !params.isNewTrack
+    && params.targetTrackIndex === params.sourceTrackIndex
+    && nextStartMs === sourceClip.startMs
+    && nextEndMs === sourceClip.endMs
+  ) {
+    // Dropped back where it started: not an edit, so no history entry.
+    return {
+      document: doc,
+      selection: resolveSelection(doc, [sourceClip.id], sourceClip.id),
+      changed: false,
+    }
+  }
+
   if (!params.isNewTrack) {
     const targetTrack = doc.tracks[params.targetTrackIndex]
     if (!targetTrack || targetTrack.locked === true) {

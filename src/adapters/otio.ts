@@ -35,6 +35,25 @@ function rangeToMs(range: TimeRange): { startMs: number, durationMs: number } {
   }
 }
 
+/**
+ * `source_range` is optional in OTIO; external files may omit it. Fall back to
+ * the media reference's available range, then to an empty range.
+ */
+function itemRangeMs(item: OtioTrack['children'][number]): { startMs: number, durationMs: number } {
+  const range = (item as { source_range?: TimeRange }).source_range
+  if (range) {
+    return rangeToMs(range)
+  }
+  if (item.OTIO_SCHEMA === 'Clip.1' && item.media_reference?.OTIO_SCHEMA === 'ExternalReference.1' && item.media_reference.available_range) {
+    return rangeToMs(item.media_reference.available_range)
+  }
+  return { startMs: 0, durationMs: 0 }
+}
+
+function msToFrames(ms: number, fps: number): number {
+  return Math.round((ms / 1000) * fps)
+}
+
 function inferTrackKind(type: string): OtioTrack['kind'] {
   return type === 'audio' || type === 'music' ? 'Audio' : 'Video'
 }
@@ -136,7 +155,7 @@ export function fromOtioTimeline(timeline: OtioTimeline): TimelineDocument {
     const clips: TimelineClip[] = []
 
     for (const item of otioTrack.children) {
-      const { startMs: sourceStartMs, durationMs } = rangeToMs(item.source_range)
+      const { startMs: sourceStartMs, durationMs } = itemRangeMs(item)
 
       if (item.OTIO_SCHEMA === 'Gap.1') {
         cursorMs += durationMs
@@ -154,8 +173,18 @@ export function fromOtioTimeline(timeline: OtioTimeline): TimelineDocument {
             ? clipLegacyMeta.type
             : trackType
 
-      const clipStartMs = Math.round(cursorMs)
-      const clipEndMs = Math.round(cursorMs + durationMs)
+      // Positions in OTIO are frame-quantized. When timelineKit metadata carries the
+      // exact millisecond bounds and they still agree with the OTIO position (within
+      // one frame), restore them so a TimelineDocument round-trips losslessly. If the
+      // OTIO was re-timed elsewhere, the OTIO position wins.
+      const frameMs = 1000 / fps
+      const exactStart = typeof clipTkMeta?.startMs === 'number' ? clipTkMeta.startMs : undefined
+      const exactEnd = typeof clipTkMeta?.endMs === 'number' ? clipTkMeta.endMs : undefined
+      const exactAgrees = exactStart !== undefined && exactEnd !== undefined
+        && Math.abs(exactStart - cursorMs) < frameMs
+        && Math.abs(exactEnd - (cursorMs + durationMs)) < frameMs
+      const clipStartMs = exactAgrees ? exactStart : Math.round(cursorMs)
+      const clipEndMs = exactAgrees ? exactEnd : Math.round(cursorMs + durationMs)
       cursorMs += durationMs
 
       let trim: TimelineTrimRange | undefined
@@ -165,7 +194,9 @@ export function fromOtioTimeline(timeline: OtioTimeline): TimelineDocument {
       else if (isRecord(clipLegacyMeta?.trimInfo) && typeof clipLegacyMeta.trimInfo.startMs === 'number' && typeof clipLegacyMeta.trimInfo.endMs === 'number') {
         trim = { startMs: clipLegacyMeta.trimInfo.startMs, endMs: clipLegacyMeta.trimInfo.endMs }
       }
-      else if (sourceStartMs > 0 || (clipType === 'video' || clipType === 'audio')) {
+      else if (!clipTkMeta && (sourceStartMs > 0 || clipType === 'video' || clipType === 'audio')) {
+        // Foreign OTIO: source_range is the only trim information. timelineKit
+        // metadata, when present, is authoritative (including "no trim").
         trim = {
           startMs: Math.round(sourceStartMs),
           endMs: Math.round(sourceStartMs + durationMs),
@@ -282,27 +313,35 @@ export function toOtioTimeline(doc: TimelineDocument): OtioTimeline {
       children: doc.tracks.map((track): OtioTrack => {
         const sortedClips = [...track.clips].sort((left, right) => left.startMs - right.startMs)
         const children: OtioTrack['children'] = []
-        let cursorMs = 0
+        // Work in absolute frames: each clip boundary is rounded once, so gap and
+        // duration rounding never accumulates along the track.
+        let cursorFrame = 0
 
         for (const clip of sortedClips) {
-          const gapMs = Math.max(0, clip.startMs - cursorMs)
-          if (gapMs > 0) {
+          // OTIO tracks are sequential: an overlapping clip (allowOverlap policy) is
+          // placed at the cursor but keeps its own length.
+          const durationFrames = Math.max(0, msToFrames(clip.endMs, fps) - msToFrames(clip.startMs, fps))
+          const startFrame = Math.max(cursorFrame, msToFrames(clip.startMs, fps))
+          const endFrame = startFrame + durationFrames
+          const gapFrames = startFrame - cursorFrame
+          if (gapFrames > 0) {
             children.push({
               OTIO_SCHEMA: 'Gap.1',
               id: `${track.id}:${clip.id}:gap`,
               name: `${clip.name} gap`,
               source_range: {
                 start_time: createRationalTime(0, fps),
-                duration: msToRationalTime(gapMs, fps),
+                duration: createRationalTime(gapFrames, fps),
               },
               metadata: {},
             })
           }
 
-          const durationMs = Math.max(0, clip.endMs - clip.startMs)
           const clipMetadata: Record<string, unknown> = {
             timelineKit: {
               type: clip.type,
+              startMs: clip.startMs,
+              endMs: clip.endMs,
               resource: clip.resource,
               durationMs: clip.durationMs,
               trim: clip.trim ? { ...clip.trim } : undefined,
@@ -317,12 +356,12 @@ export function toOtioTimeline(doc: TimelineDocument): OtioTimeline {
             media_reference: createMediaReference(clip, fps),
             source_range: {
               start_time: msToRationalTime(clip.trim?.startMs ?? 0, fps),
-              duration: msToRationalTime(durationMs, fps),
+              duration: createRationalTime(endFrame - startFrame, fps),
             },
             metadata: clipMetadata,
           })
 
-          cursorMs = Math.max(cursorMs, clip.endMs)
+          cursorFrame = endFrame
         }
 
         return {
