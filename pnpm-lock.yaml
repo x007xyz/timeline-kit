@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@happy-dom/global-registrator':
+        specifier: ^20
+        version: 20.14.6
       '@types/react':
         specifier: ^19
         version: 19.3.1
@@ -28,7 +31,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^5.4.0
-        version: 5.4.21
+        version: 5.4.21(@types/node@26.6.10)
       vue:
         specifier: ^3.5
         version: 3.5.46(typescript@5.9.3)
@@ -190,6 +193,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@happy-dom/global-registrator@20.14.6':
+    resolution: {integrity: sha512-Xd2FwCdm0cAZ+EG0upp69tpxBT9jtvVxaZv1lnbgWsNaZyEuPs0PojYgvCmtQ1RRdRCYCyWTeLjn3Z0aSxDchA==}
+    engines: {node: '>=20.0.0'}
+
   '@jridgewell/sourcemap-codec@1.6.0':
     resolution: {integrity: sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==}
 
@@ -332,6 +339,9 @@ packages:
   '@types/estree@1.0.10':
     resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
 
+  '@types/node@26.6.10':
+    resolution: {integrity: sha512-WJuPHoGB8WNQuTksNF7SOQpnH02PXeDYz4iueWbBT6/hTWnShY5F3T/hoJA3fY9+uYReDZ7pyTKKx83jQa7aGg==}
+
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
     peerDependencies:
@@ -339,6 +349,12 @@ packages:
 
   '@types/react@19.3.1':
     resolution: {integrity: sha512-HNTkBIm8zmHX8LUXX2vtZ/ONzehrV1J3abl2fUIiZ5qxTYRCj/z+rDeFwOltqCLl9lRdUTKWT41OLtYuFV/Arg==}
+
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@vue/compiler-core@3.5.46':
     resolution: {integrity: sha512-yb+N8/mgBcoeqCJPVyJI/D3OphLrSMXnB3ZQUNmRLU/1fsMW4bFfdJWNi9oIj7+EA3ULKKkP7b/VCpcYQYeiuQ==}
@@ -367,6 +383,10 @@ packages:
   '@vue/shared@3.5.46':
     resolution: {integrity: sha512-P1WePbdzHrcIciWtmY2Im9EFhdakd3rZxYqvalOa3SfoxtF35Q8Uhmj1tKn6bWP4utcOpN8ao6BoJUItq0Uf+g==}
 
+  buffer-image-size@0.6.4:
+    resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
+    engines: {node: '>=4.0'}
+
   csstype@3.2.4:
     resolution: {integrity: sha512-PoKaoPzQapnEoqUSnHx1u6W6ku8CVEgKsnpmmzU3m1nwkidpPBQ8V/Zq2+bWNrsOKoKLwTGdbx6xF7BXP1zLVQ==}
 
@@ -386,6 +406,10 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  happy-dom@20.14.6:
+    resolution: {integrity: sha512-5DDsf4QmEIlRL6NkCv/fxSjYHHkZceL/IaYQdJc2h3G7DRTEai++VTjbfL0LB9geW2VrA3+vrjF3Efx+OTtX0Q==}
+    engines: {node: '>=20.0.0'}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -431,6 +455,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
+
   vite@5.4.21:
     resolution: {integrity: sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -468,6 +495,22 @@ packages:
       typescript: '*'
     peerDependenciesMeta:
       typescript:
+        optional: true
+
+  whatwg-mimetype@3.0.0:
+    resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
+    engines: {node: '>=12'}
+
+  ws@8.23.0:
+    resolution: {integrity: sha512-wCkmX8QMOrKjgO8HW2WyDbTSGeqkocxgDzS9iR79rEAexty6/2qzilx3Ag8Tqf9ykop3irLKle0MtVn5qjVnoQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
         optional: true
 
 snapshots:
@@ -553,6 +596,14 @@ snapshots:
 
   '@esbuild/win32-x64@0.21.5':
     optional: true
+
+  '@happy-dom/global-registrator@20.14.6':
+    dependencies:
+      '@types/node': 26.6.10
+      happy-dom: 20.14.6
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
@@ -642,6 +693,10 @@ snapshots:
 
   '@types/estree@1.0.10': {}
 
+  '@types/node@26.6.10':
+    dependencies:
+      undici-types: 8.9.0
+
   '@types/react-dom@19.3.0(@types/react@19.3.1)':
     dependencies:
       '@types/react': 19.3.1
@@ -649,6 +704,12 @@ snapshots:
   '@types/react@19.3.1':
     dependencies:
       csstype: 3.2.4
+
+  '@types/whatwg-mimetype@3.0.2': {}
+
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 26.6.10
 
   '@vue/compiler-core@3.5.46':
     dependencies:
@@ -704,6 +765,10 @@ snapshots:
 
   '@vue/shared@3.5.46': {}
 
+  buffer-image-size@0.6.4:
+    dependencies:
+      '@types/node': 26.6.10
+
   csstype@3.2.4: {}
 
   entities@7.0.1: {}
@@ -738,6 +803,19 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  happy-dom@20.14.6:
+    dependencies:
+      '@types/node': 26.6.10
+      '@types/whatwg-mimetype': 3.0.2
+      '@types/ws': 8.18.2
+      buffer-image-size: 0.6.4
+      entities: 7.0.1
+      whatwg-mimetype: 3.0.0
+      ws: 8.23.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   magic-string@0.30.21:
     dependencies:
@@ -803,12 +881,15 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  vite@5.4.21:
+  undici-types@8.9.0: {}
+
+  vite@5.4.21(@types/node@26.6.10):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.5.33
       rollup: 4.68.7
     optionalDependencies:
+      '@types/node': 26.6.10
       fsevents: 2.3.3
 
   vue@3.5.46(typescript@5.9.3):
@@ -820,3 +901,7 @@ snapshots:
       '@vue/shared': 3.5.46
     optionalDependencies:
       typescript: 5.9.3
+
+  whatwg-mimetype@3.0.0: {}
+
+  ws@8.23.0: {}
