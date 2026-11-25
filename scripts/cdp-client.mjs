@@ -9,14 +9,19 @@ function findChromeBinary() {
     return process.env.CHROME_BIN
   }
 
-  const playwrightCache = path.join(os.homedir(), 'Library/Caches/ms-playwright')
-  if (fs.existsSync(playwrightCache)) {
+  for (const playwrightCache of [
+    path.join(os.homedir(), 'Library/Caches/ms-playwright'),
+    path.join(os.homedir(), '.cache/ms-playwright'),
+  ]) {
+    if (!fs.existsSync(playwrightCache)) {
+      continue
+    }
     const dirs = fs.readdirSync(playwrightCache)
       .filter(name => name.startsWith('chromium_headless_shell-'))
       .sort()
       .reverse()
     for (const dir of dirs) {
-      for (const arch of ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell-mac-x64', 'chrome-headless-shell-linux']) {
+      for (const arch of ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell-mac-x64', 'chrome-headless-shell-linux64', 'chrome-headless-shell-linux']) {
         const bin = path.join(playwrightCache, dir, arch, 'chrome-headless-shell')
         if (fs.existsSync(bin)) {
           return bin
@@ -28,6 +33,9 @@ function findChromeBinary() {
   for (const candidate of [
     '/opt/homebrew/bin/chromium',
     '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   ]) {
     if (fs.existsSync(candidate)) {

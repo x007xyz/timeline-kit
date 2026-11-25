@@ -1,9 +1,21 @@
 {
   "name": "timeline-kit",
   "version": "0.2.0",
-  "private": true,
   "type": "module",
   "description": "Framework-agnostic, plugin-driven DOM+Canvas timeline editor with lightweight TimelineDocument model, bidirectional OTIO adapter, and React/Vue adapters",
+  "keywords": [
+    "timeline",
+    "video-editor",
+    "audio",
+    "editor",
+    "nle",
+    "otio",
+    "opentimelineio",
+    "canvas",
+    "react",
+    "vue"
+  ],
+  "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/src/index.d.ts",
@@ -60,14 +72,16 @@
     "typecheck:adapters": "tsc --noEmit -p tsconfig.adapters.json",
     "test": "node --import ./scripts/ts-resolve-hook.mjs --test tests/*.test.ts",
     "test:e2e": "node --test tests/e2e/*.e2e.test.mjs",
-    "test:all": "npm run typecheck && npm run typecheck:adapters && npm run test && npm run test:e2e",
+    "test:all": "npm run lint && npm run typecheck && npm run typecheck:adapters && npm run test && npm run test:e2e",
     "serve": "node ./scripts/dev-server.mjs",
     "docs:gen-api": "node ./scripts/gen-api-docs.mjs",
     "docs:verify": "node ./scripts/verify-docs.mjs",
     "dev": "vite",
     "build": "npm run clean && vite build && tsc -p tsconfig.build.json",
     "build:demo": "vite build --mode demo",
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run typecheck:adapters && npm run test && npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -83,5 +97,8 @@
     "typescript-eslint": "^8",
     "vite": "^5.4.0",
     "vue": "^3.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
