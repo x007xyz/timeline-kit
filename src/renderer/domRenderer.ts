@@ -572,15 +572,21 @@ export class DomTimelineRenderer implements PluginRendererPort {
       width: cssWidth,
       height: cssHeight,
       ratio,
-      palette: {
-        bgColor: dark ? '#1f2937' : '#e5e7eb',
-        longColor: dark ? '#cbd5e1' : '#374151',
-        shortColor: dark ? '#94a3b8' : '#6b7280',
-        textColor: dark ? '#e5e7eb' : '#374151',
-        subTextColor: dark ? '#94a3b8' : '#6b7280',
-        focusColor: dark ? '#312e81' : '#c4b5fd',
-      },
+      palette: this.rulerPalette(dark),
     })
+  }
+
+  private rulerPalette(dark: boolean) {
+    const style = getComputedStyle(this.refs.root)
+    const color = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback
+    return {
+      bgColor: color('--tk-ruler-bg', dark ? '#1f2937' : '#e5e7eb'),
+      longColor: color('--tk-ruler-long', dark ? '#cbd5e1' : '#374151'),
+      shortColor: color('--tk-ruler-short', dark ? '#94a3b8' : '#6b7280'),
+      textColor: color('--tk-ruler-text', dark ? '#e5e7eb' : '#374151'),
+      subTextColor: color('--tk-ruler-sub', dark ? '#94a3b8' : '#6b7280'),
+      focusColor: color('--tk-ruler-focus', dark ? '#312e81' : '#c4b5fd'),
+    }
   }
 
   private renderTracks(state: TimelineState): void {
