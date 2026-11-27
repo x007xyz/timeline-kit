@@ -83,16 +83,17 @@ node scripts/sync-docs-assets.mjs
 
 1. 在 `CHANGELOG.md` 的 `## [Unreleased]` 下整理本次变更，并新增对应版本的章节（如 `## [0.2.1] - YYYY-MM-DD`）。
 2. 修改根目录 `package.json` 中的 `version`，保持与 CHANGELOG 一致。
-3. 执行全部检查与构建：
+3. 将版本变更合入 `main`，再为该提交创建并推送版本标签。
 
    ```bash
-   npm run test:all && npm run build
+   git switch main
+   git pull --ff-only
+   git tag v0.2.1
+   git push origin v0.2.1
    ```
 
-4. 确认 `dist/` 内容符合预期后发布：
+GitHub Actions 会检查标签与 `package.json` 的稳定版本号一致，运行 CI，再通过 npm Trusted Publishing 将包发布到 `latest`。
 
-   ```bash
-   npm publish
-   ```
+## 文档部署
 
-发布前请确保工作区干净，并已完成代码审查。
+每次更新 `main`，GitHub Actions 都会构建 `docs/` 并部署到 [GitHub Pages](https://x007xyz.github.io/timeline-kit/)。部署工作流会读取 Pages 的站点地址和路径前缀，切换域名后可在 Actions 里手动重新运行 `Deploy documentation`。

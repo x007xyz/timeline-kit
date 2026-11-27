@@ -9,6 +9,8 @@ const docsDir = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(docsDir, '..')
 
 export default defineConfig({
+  site: process.env.DOCS_SITE,
+  base: process.env.DOCS_BASE || '/',
   integrations: [
     starlight({
       title: 'timeline-kit',

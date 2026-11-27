@@ -104,6 +104,13 @@ const effectivePreview = showPreview || studioMode
     return attr === 'light' ? 'light' : 'dark'
   }
 
+  function withDocsBase(resource: string | undefined): string | undefined {
+    if (resource?.startsWith('/assets/')) {
+      return `${import.meta.env.BASE_URL.replace(/\/$/, '')}${resource}`
+    }
+    return resource
+  }
+
   function setupPlayground(root: HTMLElement) {
     if (root.dataset.tkInitialized === 'true') {
       return
@@ -143,7 +150,10 @@ const effectivePreview = showPreview || studioMode
         text.textContent = item.name
         chip.append(badge, text)
         chip.addEventListener('dragstart', (e) => {
-          e.dataTransfer?.setData('application/x-timeline-kit-material', JSON.stringify(item))
+          e.dataTransfer?.setData('application/x-timeline-kit-material', JSON.stringify({
+            ...item,
+            resource: withDocsBase(item.resource),
+          }))
         })
         paletteEl.appendChild(chip)
       }
@@ -207,8 +217,15 @@ const effectivePreview = showPreview || studioMode
         plugins.push(createMarqueeSelectPlugin())
       }
 
+      const timelineDocument = scenario.document && cloneDocument(scenario.document)
+      for (const track of timelineDocument?.tracks ?? []) {
+        for (const clip of track.clips) {
+          clip.resource = withDocsBase(clip.resource)
+        }
+      }
+
       editor = createTimelineEditor(hostEl, {
-        document: scenario.document ? cloneDocument(scenario.document) : undefined,
+        document: timelineDocument,
         timeline: scenario.otioTimeline,
         trackScale: scenario.trackScale,
         isMagnetEnabled: scenario.isMagnetEnabled,
