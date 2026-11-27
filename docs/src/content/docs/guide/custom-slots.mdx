@@ -22,7 +22,7 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
 采用生命周期协议后，`mount` 仅在片段进入视口时执行一次；后续选中态 (`ctx.isSelected`)、宽度 (`ctx.clipWidthPx`) 或业务属性变化时，只调用 `update(nextCtx)` 进行局部 DOM 更新：
 
 ```ts
-import type { ClipRenderContext, SlotRendererObject } from 'timeline-kit'
+import type { ClipRenderContext, SlotRendererObject } from '@flycut/timeline-kit'
 
 export const fancyTextSlot: SlotRendererObject<ClipRenderContext> = {
   mount(host, ctx) {

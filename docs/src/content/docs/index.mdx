@@ -29,7 +29,7 @@ import TimelinePlayground from '../../components/TimelinePlayground.astro';
 
 <CardGrid stagger>
   <Card title="轻量模型 + OTIO 互操作" icon="document">
-    对外提供直觉的 `TimelineDocument`（`tracks / clips`）扁平模型，同时内置 `timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1`。
+    对外提供直觉的 `TimelineDocument`（`tracks / clips`）扁平模型，同时内置 `@flycut/timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1`。
   </Card>
   <Card title="DOM + Canvas 混合虚拟化渲染" icon="rocket">
     DOM 负责结构与任意自定义插槽，Canvas 2D 绘制标尺、胶片缩略图与真实 PCM 波形，示例内建基于 Mediabunny (WebCodecs) 的真实音视频解码与预览；脏通道增量更新 + 横向虚拟挂载保障 60fps 交互流畅度。
@@ -38,6 +38,6 @@ import TimelinePlayground from '../../components/TimelinePlayground.astro';
     拖拽、裁剪、播放头、滚轮缩放、快捷键、框选与外部拖入全部构建在统一的 `InteractionManager` 与 `CommandBus` 之上，支持外部历史栈接管。
   </Card>
   <Card title="原生 / React / Vue 多端同源" icon="laptop">
-    同一份零依赖内核同时导出原生控制器的 `timeline-kit`、基于 Portal 的 `timeline-kit/react` 与基于 Teleport 插槽的 `timeline-kit/vue`。
+    同一份零依赖内核同时导出原生控制器的 `@flycut/timeline-kit`、基于 Portal 的 `@flycut/timeline-kit/react` 与基于 Teleport 插槽的 `@flycut/timeline-kit/vue`。
   </Card>
 </CardGrid>

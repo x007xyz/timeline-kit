@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { demoDocument, type TimelineEditor as VanillaTimelineEditor } from 'timeline-kit'
-import { TimelineEditor, useTimelineSelector } from 'timeline-kit/vue'
+import { demoDocument, type TimelineEditor as VanillaTimelineEditor } from '@flycut/timeline-kit'
+import { TimelineEditor, useTimelineSelector } from '@flycut/timeline-kit/vue'
 import { createShowcaseMediaProvider } from '@demo/mediaShowcase'
 import { createTimelinePreviewPlayer, type TimelinePreviewPlayerHandle } from '@demo/previewPlayer'
 

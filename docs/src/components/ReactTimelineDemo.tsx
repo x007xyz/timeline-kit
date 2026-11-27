@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { demoDocument, type ClipRenderContext } from 'timeline-kit'
+import { demoDocument, type ClipRenderContext } from '@flycut/timeline-kit'
 import {
   TimelineEditor,
   useTimelineSelector,
   type TimelineEditorRef,
-} from 'timeline-kit/react'
+} from '@flycut/timeline-kit/react'
 import { createShowcaseMediaProvider } from '@demo/mediaShowcase'
 import { createTimelinePreviewPlayer } from '@demo/previewPlayer'
 

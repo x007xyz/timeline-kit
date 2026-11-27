@@ -8,8 +8,8 @@ description: 通过完整示例学会扩展自定义命令、吸附源（如节�
 ## 示例：节拍点吸附 + 对齐命令插件
 
 ```ts
-import type { TimelinePlugin } from 'timeline-kit'
-import { msToPx } from 'timeline-kit'
+import type { TimelinePlugin } from '@flycut/timeline-kit'
+import { msToPx } from '@flycut/timeline-kit'
 
 export function createBeatMarkerPlugin(beatTimesMs: number[]): TimelinePlugin {
   return {

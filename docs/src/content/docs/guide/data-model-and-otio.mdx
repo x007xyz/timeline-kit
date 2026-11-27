@@ -11,7 +11,7 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
 ## `TimelineDocument` 结构
 
 ```ts
-import type { TimelineDocument } from 'timeline-kit'
+import type { TimelineDocument } from '@flycut/timeline-kit'
 
 const doc: TimelineDocument = {
   id: 'demo-project',
@@ -64,7 +64,7 @@ import {
   toOtioTimeline,
   isOtioTimeline,
   otioDemoTimeline,
-} from 'timeline-kit'
+} from '@flycut/timeline-kit'
 
 // 1. 直接用 OTIO 数据初始化编辑器
 const editor = createTimelineEditor(container, {

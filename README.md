@@ -2,34 +2,34 @@
 
 框架无关、插件驱动的 **DOM + Canvas 混合时间轴编辑器组件库**，面向中轻度音视频与图文剪辑场景设计，提供开箱即用的完整体验、高度可定制的插槽/策略/插件体系，以及 React / Vue 3 / 原生 TS 多端适配。
 
-- **轻量数据模型 + 双向 OTIO 兼容**：默认对外提供扁平直觉的 `TimelineDocument（tracks / clips）`，同时内置 `timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1` 与旧版 FlyCut metadata。
+- **轻量数据模型 + 双向 OTIO 兼容**：默认对外提供扁平直觉的 `TimelineDocument（tracks / clips）`，同时内置 `@flycut/timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1` 与旧版 FlyCut metadata。
 - **混合分层渲染 + 视口虚拟化**：DOM 骨架负责结构、裁剪手柄与任意自定义插槽；Canvas 2D 负责标尺、视频胶片缩略图与音频真实波形；结合脏区通道（`playhead / selection / ruler / tracks / sidebar / toolbar / overlay`）与横向视口虚拟挂载，实现 60fps 播放头推进与百级片段流畅滚动。
 - **命令总线与插件化交互**：`TimelineStore` + `CommandBus`（支持内置历史栈或外部全局 Undo/Redo 接管）+ `InteractionManager`（拖拽、裁剪、播放头、滚轮锚点缩放、快捷键、框选多选、网格吸附、外部素材拖入皆为独立插件）。
-- **多框架无缝集成**：提供原生 JS/TS、`timeline-kit/react`（Portal + `useSyncExternalStore`）、`timeline-kit/vue`（Teleport + Scoped Slots）及纯逻辑内核 `timeline-kit/core`。
+- **多框架无缝集成**：提供原生 JS/TS、`@flycut/timeline-kit/react`（Portal + `useSyncExternalStore`）、`@flycut/timeline-kit/vue`（Teleport + Scoped Slots）及纯逻辑内核 `@flycut/timeline-kit/core`。
 
 ---
 
 ## 安装
 
 ```bash
-npm i timeline-kit
+npm i @flycut/timeline-kit
 # 或
-pnpm add timeline-kit
+pnpm add @flycut/timeline-kit
 ```
 
-- `react` / `react-dom`（>=18）与 `vue`（>=3.3）是**可选 peer 依赖**，仅在使用 `timeline-kit/react` 或 `timeline-kit/vue` 适配层时需要安装；只使用原生 JS / TS 入口时无需安装。
+- `react` / `react-dom`（>=18）与 `vue`（>=3.3）是**可选 peer 依赖**，仅在使用 `@flycut/timeline-kit/react` 或 `@flycut/timeline-kit/vue` 适配层时需要安装；只使用原生 JS / TS 入口时无需安装。
 - 包内同时提供 ESM 产物与 TypeScript 类型声明，无需额外安装 `@types/*`。
 
 ### 入口一览
 
 | 入口 | 内容 |
 | --- | --- |
-| `timeline-kit` | 默认入口：`createTimelineEditor`、`demoDocument`、官方交互插件等，开箱即用的完整编辑器 |
-| `timeline-kit/core` | 纯逻辑内核：数据模型与编辑操作、引擎计算、`TimelineStore` / `CommandBus`、插件类型与 `InteractionManager`、框架桥接工具（不含默认 UI 渲染器） |
-| `timeline-kit/otio` | OpenTimelineIO 双向适配器（`Timeline.1` 与旧版 FlyCut metadata） |
-| `timeline-kit/plugins` | 官方插件集合（框选、磁吸、外部拖入等） |
-| `timeline-kit/react` | React 适配层：`TimelineEditor` 组件（Portal + `useSyncExternalStore`）与 `useTimelineSelector` 等 Hooks |
-| `timeline-kit/vue` | Vue 3 适配层：`TimelineEditor` 组件（Teleport + 作用域插槽）与 Composables |
+| `@flycut/timeline-kit` | 默认入口：`createTimelineEditor`、`demoDocument`、官方交互插件等，开箱即用的完整编辑器 |
+| `@flycut/timeline-kit/core` | 纯逻辑内核：数据模型与编辑操作、引擎计算、`TimelineStore` / `CommandBus`、插件类型与 `InteractionManager`、框架桥接工具（不含默认 UI 渲染器） |
+| `@flycut/timeline-kit/otio` | OpenTimelineIO 双向适配器（`Timeline.1` 与旧版 FlyCut metadata） |
+| `@flycut/timeline-kit/plugins` | 官方插件集合（框选、磁吸、外部拖入等） |
+| `@flycut/timeline-kit/react` | React 适配层：`TimelineEditor` 组件（Portal + `useSyncExternalStore`）与 `useTimelineSelector` 等 Hooks |
+| `@flycut/timeline-kit/vue` | Vue 3 适配层：`TimelineEditor` 组件（Teleport + 作用域插槽）与 Composables |
 
 ### 浏览器支持
 
@@ -47,7 +47,7 @@ import {
   createTimelineEditor,
   demoDocument,
   createMarqueeSelectPlugin,
-} from 'timeline-kit'
+} from '@flycut/timeline-kit'
 
 const editor = createTimelineEditor(document.getElementById('timeline')!, {
   document: demoDocument,
@@ -71,7 +71,7 @@ editor.subscribeSelector(
 ### 2. React
 
 ```tsx
-import { TimelineEditor, useTimelineSelector } from 'timeline-kit/react'
+import { TimelineEditor, useTimelineSelector } from '@flycut/timeline-kit/react'
 
 export function App() {
   return (
@@ -126,9 +126,9 @@ editor.exec('clip:split')
 timeline-kit/
 ├── src/
 │   ├── index.ts                默认开箱即用入口
-│   ├── core-entry.ts           纯逻辑内核入口 (timeline-kit/core)
-│   ├── otio-entry.ts           OTIO 适配入口 (timeline-kit/otio)
-│   ├── plugins-entry.ts        官方插件入口 (timeline-kit/plugins)
+│   ├── core-entry.ts           纯逻辑内核入口 (@flycut/timeline-kit/core)
+│   ├── otio-entry.ts           OTIO 适配入口 (@flycut/timeline-kit/otio)
+│   ├── plugins-entry.ts        官方插件入口 (@flycut/timeline-kit/plugins)
 │   ├── model/                  TimelineDocument 类型、纯编辑操作与 demoDocument
 │   ├── adapters/otio.ts        OTIO <-> TimelineDocument 双向适配器
 │   ├── otio-core/              内置 OpenTimelineIO 数据层

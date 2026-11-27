@@ -1,11 +1,11 @@
 ---
 title: Vue 3 集成 (Teleport + Composables)
-description: 使用 timeline-kit/vue 通过 Teleport 作用域插槽定制片段与轨道图标，并用组合式函数订阅状态。
+description: 使用 @flycut/timeline-kit/vue 通过 Teleport 作用域插槽定制片段与轨道图标，并用组合式函数订阅状态。
 ---
 
 import VueTimelineDemo from '../../../components/VueTimelineDemo.vue';
 
-`timeline-kit/vue` 通过 `<Teleport>` 桥接 Vue 3 作用域插槽 `#clip` 与 `#track-icon`，让片段模板能够直接共享宿主的 Pinia Store 与 `provide/inject` 依赖注入，同时保持内核渲染的虚拟化销毁生命周期。
+`@flycut/timeline-kit/vue` 通过 `<Teleport>` 桥接 Vue 3 作用域插槽 `#clip` 与 `#track-icon`，让片段模板能够直接共享宿主的 Pinia Store 与 `provide/inject` 依赖注入，同时保持内核渲染的虚拟化销毁生命周期。
 
 ## 在线 Vue 3 真实岛屿示例
 
@@ -18,8 +18,8 @@ import VueTimelineDemo from '../../../components/VueTimelineDemo.vue';
 ```vue
 <script setup lang="ts">
 import { ref, shallowRef } from 'vue'
-import { demoDocument, type TimelineEditor as VanillaEditor } from 'timeline-kit'
-import { TimelineEditor, useTimelineSelector } from 'timeline-kit/vue'
+import { demoDocument, type TimelineEditor as VanillaEditor } from '@flycut/timeline-kit'
+import { TimelineEditor, useTimelineSelector } from '@flycut/timeline-kit/vue'
 
 const editorCompRef = ref<{ exec: (cmd: string) => boolean } | null>(null)
 const editorInstance = shallowRef<VanillaEditor | null>(null)

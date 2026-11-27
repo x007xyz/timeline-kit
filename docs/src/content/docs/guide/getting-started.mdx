@@ -10,12 +10,18 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
 
 | 入口路径 | 用途 |
 | --- | --- |
-| `timeline-kit` | 开箱即用完整编辑器（内核 + DOM/Canvas 渲染器 + 默认插件 + OTIO 适配器） |
-| `timeline-kit/core` | 纯逻辑与无头内核（`model`、`engine`、`store`、`InteractionManager`、`SlotBridge`） |
-| `timeline-kit/otio` | OpenTimelineIO 底层数据结构（`otio-core`）与双向适配器 |
-| `timeline-kit/plugins` | 官方交互插件（框选多选、外部拖入、网格吸附等） |
-| `timeline-kit/react` | React 18/19 适配组件与 `useTimelineSelector` Hook |
-| `timeline-kit/vue` | Vue 3 适配组件与 `useTimelineSelector` 组合式函数 |
+| `@flycut/timeline-kit` | 开箱即用完整编辑器（内核 + DOM/Canvas 渲染器 + 默认插件 + OTIO 适配器） |
+| `@flycut/timeline-kit/core` | 纯逻辑与无头内核（`model`、`engine`、`store`、`InteractionManager`、`SlotBridge`） |
+| `@flycut/timeline-kit/otio` | OpenTimelineIO 底层数据结构（`otio-core`）与双向适配器 |
+| `@flycut/timeline-kit/plugins` | 官方交互插件（框选多选、外部拖入、网格吸附等） |
+| `@flycut/timeline-kit/react` | React 18/19 适配组件与 `useTimelineSelector` Hook |
+| `@flycut/timeline-kit/vue` | Vue 3 适配组件与 `useTimelineSelector` 组合式函数 |
+
+## 安装
+
+```sh
+npm install @flycut/timeline-kit
+```
 
 ## 多框架接入
 
@@ -26,7 +32,7 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
       createTimelineEditor,
       demoDocument,
       createMarqueeSelectPlugin,
-    } from 'timeline-kit'
+    } from '@flycut/timeline-kit'
 
     const editor = createTimelineEditor(document.getElementById('timeline')!, {
       document: demoDocument,
@@ -49,8 +55,8 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
   </TabItem>
   <TabItem label="React">
     ```tsx
-    import { TimelineEditor } from 'timeline-kit/react'
-    import { demoDocument } from 'timeline-kit'
+    import { TimelineEditor } from '@flycut/timeline-kit/react'
+    import { demoDocument } from '@flycut/timeline-kit'
 
     export function EditorView() {
       return (
@@ -75,8 +81,8 @@ import TimelinePlayground from '../../../components/TimelinePlayground.astro';
   <TabItem label="Vue 3">
     ```vue
     <script setup lang="ts">
-    import { TimelineEditor } from 'timeline-kit/vue'
-    import { demoDocument } from 'timeline-kit'
+    import { TimelineEditor } from '@flycut/timeline-kit/vue'
+    import { demoDocument } from '@flycut/timeline-kit'
     </script>
 
     <template>

@@ -1,5 +1,5 @@
 {
-  "name": "timeline-kit",
+  "name": "@flycut/timeline-kit",
   "version": "0.2.0",
   "type": "module",
   "description": "Framework-agnostic, plugin-driven DOM+Canvas timeline editor with lightweight TimelineDocument model, bidirectional OTIO adapter, and React/Vue adapters",
@@ -17,6 +17,14 @@
   ],
   "license": "AGPL-3.0-only",
   "author": "timeline-kit authors <x007xyzabc@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/x007xyz/timeline-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/x007xyz/timeline-kit/issues"
+  },
+  "homepage": "https://github.com/x007xyz/timeline-kit#readme",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/src/index.d.ts",

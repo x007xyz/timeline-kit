@@ -12,13 +12,13 @@
 
 ### 新增
 
-- 框架无关的 DOM + Canvas 混合时间轴编辑器，提供开箱即用的完整体验（`timeline-kit`）。
-- 轻量 `TimelineDocument`（tracks / clips）数据模型，以及双向无损的 OTIO 适配器（`timeline-kit/otio`），兼容 `Timeline.1` 与旧版 FlyCut metadata。
+- 框架无关的 DOM + Canvas 混合时间轴编辑器，提供开箱即用的完整体验（`@flycut/timeline-kit`）。
+- 轻量 `TimelineDocument`（tracks / clips）数据模型，以及双向无损的 OTIO 适配器（`@flycut/timeline-kit/otio`），兼容 `Timeline.1` 与旧版 FlyCut metadata。
 - 混合分层渲染与横向视口虚拟化：标尺、视频胶片缩略图、音频真实波形基于 Canvas 2D，结构与插槽基于 DOM。
 - `TimelineStore` + `CommandBus`，支持内置历史栈或外部全局 Undo/Redo 接管。
 - 交互能力以插件形式提供：拖拽、裁剪、播放头、滚轮锚点缩放、快捷键、框选多选、网格吸附、外部素材拖入。
-- 纯逻辑内核入口（`timeline-kit/core`）与官方插件入口（`timeline-kit/plugins`）。
-- React 适配（`timeline-kit/react`，Portal + `useSyncExternalStore`）与 Vue 3 适配（`timeline-kit/vue`，Teleport + 作用域插槽）。
+- 纯逻辑内核入口（`@flycut/timeline-kit/core`）与官方插件入口（`@flycut/timeline-kit/plugins`）。
+- React 适配（`@flycut/timeline-kit/react`，Portal + `useSyncExternalStore`）与 Vue 3 适配（`@flycut/timeline-kit/vue`，Teleport + 作用域插槽）。
 - 构建产物：按入口拆分的 ESM 输出与类型声明（`dist/`）。
 
 ### 变更

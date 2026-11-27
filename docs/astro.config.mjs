@@ -106,12 +106,12 @@ export default defineConfig({
     resolve: {
       dedupe: ['vue', 'react', 'react-dom'],
       alias: [
-        { find: 'timeline-kit/core', replacement: path.resolve(rootDir, 'src/core-entry.ts') },
-        { find: 'timeline-kit/otio', replacement: path.resolve(rootDir, 'src/otio-entry.ts') },
-        { find: 'timeline-kit/plugins', replacement: path.resolve(rootDir, 'src/plugins-entry.ts') },
-        { find: 'timeline-kit/react', replacement: path.resolve(rootDir, 'adapters/react/index.ts') },
-        { find: 'timeline-kit/vue', replacement: path.resolve(rootDir, 'adapters/vue/index.ts') },
-        { find: 'timeline-kit', replacement: path.resolve(rootDir, 'src/index.ts') },
+        { find: '@flycut/timeline-kit/core', replacement: path.resolve(rootDir, 'src/core-entry.ts') },
+        { find: '@flycut/timeline-kit/otio', replacement: path.resolve(rootDir, 'src/otio-entry.ts') },
+        { find: '@flycut/timeline-kit/plugins', replacement: path.resolve(rootDir, 'src/plugins-entry.ts') },
+        { find: '@flycut/timeline-kit/react', replacement: path.resolve(rootDir, 'adapters/react/index.ts') },
+        { find: '@flycut/timeline-kit/vue', replacement: path.resolve(rootDir, 'adapters/vue/index.ts') },
+        { find: '@flycut/timeline-kit', replacement: path.resolve(rootDir, 'src/index.ts') },
         { find: '@demo', replacement: path.resolve(rootDir, 'demo') },
       ],
     },

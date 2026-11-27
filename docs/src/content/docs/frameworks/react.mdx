@@ -1,11 +1,11 @@
 ---
 title: React 集成 (Portal + Hooks)
-description: 使用 timeline-kit/react 挂载基于 React Portal 的自定义 Clip 插槽并订阅切片状态。
+description: 使用 @flycut/timeline-kit/react 挂载基于 React Portal 的自定义 Clip 插槽并订阅切片状态。
 ---
 
 import ReactTimelineDemo from '../../../components/ReactTimelineDemo';
 
-`timeline-kit/react` 封装了一个薄适配层，内部通过 `createSlotBridge()` 与 `ReactDOM.createPortal` 将宿主的 JSX 组件直接投射到时间轴渲染器管理的 DOM 宿主节点中：
+`@flycut/timeline-kit/react` 封装了一个薄适配层，内部通过 `createSlotBridge()` 与 `ReactDOM.createPortal` 将宿主的 JSX 组件直接投射到时间轴渲染器管理的 DOM 宿主节点中：
 
 - **保留完整 React 上下文**：片段内部的 JSX 可以直接消费外层的 Theme、Router、i18n 与状态 Context；
 - **组件保活与按需回收**：播放头移动或选中态更新不会卸载重建组件，片段滚出虚拟视口时自动卸载；
@@ -21,12 +21,12 @@ import ReactTimelineDemo from '../../../components/ReactTimelineDemo';
 
 ```tsx
 import { useRef, useState } from 'react'
-import { demoDocument, type ClipRenderContext } from 'timeline-kit'
+import { demoDocument, type ClipRenderContext } from '@flycut/timeline-kit'
 import {
   TimelineEditor,
   useTimelineSelector,
   type TimelineEditorRef,
-} from 'timeline-kit/react'
+} from '@flycut/timeline-kit/react'
 
 export function StudioTimeline() {
   const editorRef = useRef<TimelineEditorRef | null>(null)
