@@ -96,4 +96,4 @@ GitHub Actions 会检查标签与 `package.json` 的稳定版本号一致，运�
 
 ## 文档部署
 
-每次更新 `main`，GitHub Actions 都会构建 `docs/` 并部署到 [GitHub Pages](https://x007xyz.github.io/timeline-kit/)。部署工作流会读取 Pages 的站点地址和路径前缀，切换域名后可在 Actions 里手动重新运行 `Deploy documentation`。
+每次更新 `main`，GitHub Actions 都会构建 `docs/` 并通过 GitHub Pages 部署到 [文档网站](https://timeline-kit.flycut.co/)。部署工作流会读取 Pages 的域名和路径前缀，切换域名后可在 Actions 里手动运行 `Deploy documentation`。

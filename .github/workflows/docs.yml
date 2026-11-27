@@ -40,7 +40,7 @@ jobs:
       - run: node scripts/verify-docs.mjs
       - run: pnpm --dir docs build
         env:
-          DOCS_SITE: ${{ steps.pages.outputs.origin }}
+          DOCS_SITE: https://${{ steps.pages.outputs.host }}
           DOCS_BASE: ${{ steps.pages.outputs.base_path }}
 
       - uses: actions/upload-pages-artifact@v3

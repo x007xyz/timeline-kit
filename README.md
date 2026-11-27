@@ -2,7 +2,7 @@
 
 框架无关、插件驱动的 **DOM + Canvas 混合时间轴编辑器组件库**，面向中轻度音视频与图文剪辑场景设计，提供开箱即用的完整体验、高度可定制的插槽/策略/插件体系，以及 React / Vue 3 / 原生 TS 多端适配。
 
-[在线文档与交互示例](https://x007xyz.github.io/timeline-kit/)
+[在线文档与交互示例](https://timeline-kit.flycut.co/)
 
 - **轻量数据模型 + 双向 OTIO 兼容**：默认对外提供扁平直觉的 `TimelineDocument（tracks / clips）`，同时内置 `@flycut/timeline-kit/otio` 双向无损适配器兼容 OpenTimelineIO `Timeline.1` 与旧版 FlyCut metadata。
 - **混合分层渲染 + 视口虚拟化**：DOM 骨架负责结构、裁剪手柄与任意自定义插槽；Canvas 2D 负责标尺、视频胶片缩略图与音频真实波形；结合脏区通道（`playhead / selection / ruler / tracks / sidebar / toolbar / overlay`）与横向视口虚拟挂载，实现 60fps 播放头推进与百级片段流畅滚动。
