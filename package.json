@@ -1,6 +1,6 @@
 {
   "name": "@flycut/timeline-kit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Framework-agnostic, plugin-driven DOM+Canvas timeline editor with lightweight TimelineDocument model, bidirectional OTIO adapter, and React/Vue adapters",
   "keywords": [
